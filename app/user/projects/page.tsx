@@ -140,7 +140,7 @@ export default function ProjectsPage() {
           onPromptChange={setPrompt}
           onGenerate={handleGenerate}
           isGenerating={isGenerating}
-          canGenerate={canGenerate && Boolean(currentProjectId)}
+          canGenerate={canGenerate}
           messages={messages}
           selectedModel={selectedModel}
           onModelChange={setSelectedModel}
