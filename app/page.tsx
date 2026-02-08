@@ -32,6 +32,7 @@ export default function Home() {
     role: "system" | "user" | "assistant";
     content: string;
     meta?: string;
+    tokens?: number;
   }>>([]);
 
   const [walletAddress, setWalletAddress] = useState("");
@@ -41,7 +42,8 @@ export default function Home() {
     { id: "3", name: "Product Launch Page", updatedAt: "3 days ago" },
   ]);
   const [currentProjectId, setCurrentProjectId] = useState("1");
-  const [selectedModel, setSelectedModel] = useState<"gpt-4" | "claude-3">("gpt-4");
+  const [selectedModel, setSelectedModel] = useState<"gpt-4" | "gpt-3.5-turbo" | "gpt-4o">("gpt-4");
+  const [totalTokens, setTotalTokens] = useState(0);
   const canGenerate = walletConnected && sessionActive;
 
   const ethereum = useMemo(() => {
@@ -159,6 +161,12 @@ export default function Home() {
 
       const data = await response.json();
       const generatedCode = data.code;
+      const tokens = data.tokens;
+
+      // Update total tokens
+      if (tokens?.total) {
+        setTotalTokens((prev) => prev + tokens.total);
+      }
 
       // Update preview with generated code
       setPreviewHtml(generatedCode);
@@ -174,6 +182,7 @@ export default function Home() {
           role: "assistant",
           content: `Generated your ${sanitizedPrompt.toLowerCase()}. Check the preview panel to see the result!`,
           meta: `Generation #${nextCount} • 0.08 USDC`,
+          tokens: tokens?.total || 0,
         },
       ]);
     } catch (error) {
@@ -229,6 +238,7 @@ export default function Home() {
         sessionBalance={sessionBalance}
         onStartSession={handleStartSession}
         onEndSession={handleEndSession}
+        totalTokens={totalTokens}
       />
 
       {/* Main Content: Sidebar + Split View */}
