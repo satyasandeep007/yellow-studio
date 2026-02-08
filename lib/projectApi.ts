@@ -117,12 +117,17 @@ export const updateSession = (payload: {
   balanceUsdc: number;
   status: "open" | "closed";
   totalTokens?: number;
-}) =>
+  }) =>
   fetchJson<{ session: SessionRow }>("/api/db/sessions", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+
+export const fetchSessions = (walletAddress: string) =>
+  fetchJson<{ sessions: SessionRow[] }>(
+    `/api/db/sessions?wallet=${normalizeWallet(walletAddress)}`
+  );
 
 export const createTransaction = (payload: {
   sessionId: string;

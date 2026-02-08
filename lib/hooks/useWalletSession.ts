@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { updateSession, upsertSession } from "@/lib/projectApi";
+import { fetchSessions, updateSession, upsertSession } from "@/lib/projectApi";
 
 type EthereumProvider = {
   isMetaMask?: boolean;
@@ -130,13 +130,22 @@ export const useWalletSession = () => {
 
   useEffect(() => {
     if (!walletConnected || !walletAddress) return;
-    upsertSession(walletAddress, 0)
+    fetchSessions(walletAddress)
       .then((data) => {
-        if (!data.session) return;
-        setSessionId(data.session.id);
-        setSessionBalance(Number(data.session.balance_usdc || 0));
-        setSessionActive(data.session.status === "open");
-        setSessionTokens(Number(data.session.total_tokens || 0));
+        const sessions = data.sessions || [];
+        if (!sessions.length) {
+          setSessionId(null);
+          setSessionBalance(0);
+          setSessionTokens(0);
+          setSessionActive(false);
+          return;
+        }
+        const openSession = sessions.find((session) => session.status === "open");
+        const latest = openSession ?? sessions[0];
+        setSessionId(latest.id);
+        setSessionBalance(Number(latest.balance_usdc || 0));
+        setSessionTokens(Number(latest.total_tokens || 0));
+        setSessionActive(latest.status === "open");
       })
       .catch(() => {});
   }, [walletConnected, walletAddress]);
