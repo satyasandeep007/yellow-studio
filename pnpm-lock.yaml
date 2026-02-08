@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@twa-dev/sdk':
+        specifier: ^8.0.2
+        version: 8.0.2(react@19.2.3)
       next:
         specifier: 16.1.6
         version: 16.1.6(@babel/core@7.29.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -498,6 +501,14 @@ packages:
 
   '@tailwindcss/postcss@4.1.18':
     resolution: {integrity: sha512-Ce0GFnzAOuPyfV5SxjXGn0CubwGcuDB0zcdaPuCSzAa/2vII24JTkH+I6jcbXLb1ctjZMZZI6OjDaLPJQL1S0g==}
+
+  '@twa-dev/sdk@8.0.2':
+    resolution: {integrity: sha512-Pp5GxnxP2blboVZFiM9aWjs4cb8IpW3x2jP3kLOMvIqy0jzNUTuFHkwHtx+zEvh/UcF2F+wmS8G6ebIA0XPXcg==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+
+  '@twa-dev/types@8.0.2':
+    resolution: {integrity: sha512-ICQ6n4NaUPPzV3/GzflVQS6Nnu5QX2vr9OlOG8ZkFf3rSJXzRKazrLAbZlVhCPPWkIW3MMuELPsE6tByrA49qA==}
 
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
@@ -2322,6 +2333,13 @@ snapshots:
       '@tailwindcss/oxide': 4.1.18
       postcss: 8.5.6
       tailwindcss: 4.1.18
+
+  '@twa-dev/sdk@8.0.2(react@19.2.3)':
+    dependencies:
+      '@twa-dev/types': 8.0.2
+      react: 19.2.3
+
+  '@twa-dev/types@8.0.2': {}
 
   '@tybys/wasm-util@0.10.1':
     dependencies:

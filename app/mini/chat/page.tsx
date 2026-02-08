@@ -1,9 +1,28 @@
+'use client';
+
+import { useTelegram } from '@/lib/telegram/TelegramProvider';
+
 export default function MiniChat() {
+   const { user, isLoading } = useTelegram();
+
+   if (isLoading) {
+      return (
+         <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+         </div>
+      );
+   }
+
    return (
       <div className="min-h-screen p-4 bg-gray-50">
          <div className="max-w-2xl mx-auto">
             <div className="flex justify-between items-center mb-4">
-               <h1 className="text-2xl font-bold">Signal Chat ⭐</h1>
+               <div>
+                  <h1 className="text-2xl font-bold">Signal Chat ⭐</h1>
+                  {user && (
+                     <p className="text-sm text-gray-600">@{user.username || user.firstName}</p>
+                  )}
+               </div>
                <div className="bg-blue-100 px-4 py-2 rounded-lg">
                   <span className="text-sm font-semibold">Session: $0.00</span>
                </div>
