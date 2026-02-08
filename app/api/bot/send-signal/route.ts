@@ -14,6 +14,18 @@ export async function POST(request: NextRequest) {
          );
       }
 
+      // Validate chat ID format
+      if (typeof chatId === 'string' && chatId.startsWith('@')) {
+         return NextResponse.json(
+            {
+               error: 'Invalid chat ID format',
+               message: 'Please use your numeric chat ID (e.g., 123456789), not @username',
+               help: 'Visit /api/bot/get-chat-id to find your chat ID'
+            },
+            { status: 400 }
+         );
+      }
+
       const message = `
 🚀 <b>${signal.asset || 'ETH'} Signal Alert</b>
 
@@ -25,7 +37,11 @@ Confidence: 🔒 <i>Locked</i>
 💎 Unlock premium insights below 👇
     `.trim();
 
-      const keyboard = {
+      // Check if we're using HTTPS (production) or HTTP (local testing)
+      const isProduction = MINI_APP_URL.startsWith('https://');
+
+      const keyboard = isProduction ? {
+         // Production: Use web_app buttons (requires HTTPS)
          inline_keyboard: [
             [
                {
@@ -52,6 +68,34 @@ Confidence: 🔒 <i>Locked</i>
                }
             ]
          ]
+      } : {
+         // Local testing: Use callback buttons with URLs in message
+         inline_keyboard: [
+            [
+               {
+                  text: '🔓 Unlock Full Signal – ₹1',
+                  callback_data: `unlock_${signal.id}`
+               }
+            ],
+            [
+               {
+                  text: '❓ Ask Trader – ₹1',
+                  callback_data: `ask_${signal.id}`
+               }
+            ],
+            [
+               {
+                  text: '🤖 AI Explain – ₹2',
+                  callback_data: `ai_${signal.id}`
+               }
+            ],
+            [
+               {
+                  text: '🔗 Open Mini App (Local)',
+                  url: `${MINI_APP_URL}/mini/unlock?signal=${signal.id}&action=unlock`
+               }
+            ]
+         ]
       };
 
       // Send message via Telegram Bot API
@@ -72,7 +116,22 @@ Confidence: 🔒 <i>Locked</i>
       const data = await response.json();
 
       if (!data.ok) {
-         throw new Error(data.description || 'Telegram API error');
+         let errorMessage = data.description || 'Telegram API error';
+         let helpMessage = '';
+
+         if (data.description?.includes('chat not found')) {
+            errorMessage = 'Chat not found. Please make sure you have started the bot.';
+            helpMessage = 'Steps: 1) Open your bot in Telegram, 2) Click START or send /start, 3) Send any message, 4) Visit /api/bot/get-chat-id to get your chat ID';
+         }
+
+         return NextResponse.json(
+            {
+               error: errorMessage,
+               help: helpMessage,
+               telegramError: data.description
+            },
+            { status: 400 }
+         );
       }
 
       return NextResponse.json({

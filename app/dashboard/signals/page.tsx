@@ -64,10 +64,29 @@ export default function DashboardSignals() {
       }
    }
 
+   async function handleGetChatId() {
+      window.open('/dashboard/chat-id-help', '_blank');
+   }
+
    async function handlePostToGroup(signal: Signal) {
-      const chatId = prompt('Enter Telegram Chat ID or @username (e.g., @your_channel or your user ID):');
+      const instructions =
+         'Enter your NUMERIC Chat ID (e.g., 123456789)\n\n' +
+         'How to get it:\n' +
+         '1. Start your bot in Telegram\n' +
+         '2. Send any message to the bot\n' +
+         '3. Click "Get My Chat ID" button first\n' +
+         '4. Copy the chatId number\n\n' +
+         'Note: Do NOT use @username';
+
+      const chatId = prompt(instructions);
 
       if (!chatId) return;
+
+      // Basic validation
+      if (chatId.startsWith('@')) {
+         alert('❌ Error: Please use numeric chat ID, not @username\n\nClick "Get My Chat ID" button to find it.');
+         return;
+      }
 
       setIsPosting(signal.id);
 
@@ -94,11 +113,13 @@ export default function DashboardSignals() {
             ));
             alert('✅ Signal posted to Telegram!');
          } else {
+            const errorMsg = result.error || 'Unknown error';
+            const helpMsg = result.help || '';
+            alert(`❌ ${errorMsg}\n\n${helpMsg}`);
             throw new Error(result.error);
          }
       } catch (error) {
          console.error('Error posting signal:', error);
-         alert('❌ Failed to post signal: ' + (error instanceof Error ? error.message : 'Unknown error'));
       } finally {
          setIsPosting(null);
       }
@@ -109,9 +130,17 @@ export default function DashboardSignals() {
          <div className="max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-6">
                <h1 className="text-3xl font-bold">Manage Signals</h1>
-               <a href="/dashboard/overview" className="text-blue-600 hover:underline">
-                  ← Back to Overview
-               </a>
+               <div className="flex gap-3">
+                  <button
+                     onClick={handleGetChatId}
+                     className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
+                  >
+                     🆔 Get My Chat ID
+                  </button>
+                  <a href="/dashboard/overview" className="text-blue-600 hover:underline flex items-center">
+                     ← Back to Overview
+                  </a>
+               </div>
             </div>
 
             {/* Create Signal Form */}
@@ -195,69 +224,71 @@ export default function DashboardSignals() {
                   >
                      {isCreating ? 'Creating...' : 'Create Signal'}
                   </button>
-               </form>
-            </div>
+               </form >
+            </div >
 
             {/* Existing Signals */}
-            <div className="bg-white rounded-lg shadow p-6">
+            < div className="bg-white rounded-lg shadow p-6" >
                <h2 className="text-xl font-bold mb-4">Active Signals</h2>
 
-               {signals.length === 0 ? (
-                  <p className="text-gray-500">No signals created yet</p>
-               ) : (
-                  <div className="space-y-4">
-                     {signals.map((signal) => (
-                        <div key={signal.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                           <div className="flex justify-between items-start mb-3">
-                              <div>
-                                 <h3 className="font-bold text-lg">{signal.asset} Signal</h3>
-                                 <p className="text-sm text-gray-500">#{signal.id}</p>
+               {
+                  signals.length === 0 ? (
+                     <p className="text-gray-500">No signals created yet</p>
+                  ) : (
+                     <div className="space-y-4">
+                        {signals.map((signal) => (
+                           <div key={signal.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                              <div className="flex justify-between items-start mb-3">
+                                 <div>
+                                    <h3 className="font-bold text-lg">{signal.asset} Signal</h3>
+                                    <p className="text-sm text-gray-500">#{signal.id}</p>
+                                 </div>
+                                 {signal.posted ? (
+                                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                                       ✅ Posted
+                                    </span>
+                                 ) : (
+                                    <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm">
+                                       📝 Draft
+                                    </span>
+                                 )}
                               </div>
-                              {signal.posted ? (
-                                 <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-                                    ✅ Posted
-                                 </span>
-                              ) : (
-                                 <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm">
-                                    📝 Draft
-                                 </span>
+
+                              <div className="grid grid-cols-4 gap-4 mb-3 text-sm">
+                                 <div>
+                                    <span className="text-gray-600">Entry:</span>
+                                    <p className="font-semibold">${signal.price}</p>
+                                 </div>
+                                 <div>
+                                    <span className="text-gray-600">Target:</span>
+                                    <p className="font-semibold text-green-600">${signal.target}</p>
+                                 </div>
+                                 <div>
+                                    <span className="text-gray-600">Stop:</span>
+                                    <p className="font-semibold text-red-600">${signal.stopLoss}</p>
+                                 </div>
+                                 <div>
+                                    <span className="text-gray-600">Confidence:</span>
+                                    <p className="font-semibold">{signal.confidence}%</p>
+                                 </div>
+                              </div>
+
+                              {!signal.posted && (
+                                 <button
+                                    onClick={() => handlePostToGroup(signal)}
+                                    disabled={isPosting === signal.id}
+                                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                                 >
+                                    {isPosting === signal.id ? 'Posting...' : '📤 Post to Telegram Group'}
+                                 </button>
                               )}
                            </div>
-
-                           <div className="grid grid-cols-4 gap-4 mb-3 text-sm">
-                              <div>
-                                 <span className="text-gray-600">Entry:</span>
-                                 <p className="font-semibold">${signal.price}</p>
-                              </div>
-                              <div>
-                                 <span className="text-gray-600">Target:</span>
-                                 <p className="font-semibold text-green-600">${signal.target}</p>
-                              </div>
-                              <div>
-                                 <span className="text-gray-600">Stop:</span>
-                                 <p className="font-semibold text-red-600">${signal.stopLoss}</p>
-                              </div>
-                              <div>
-                                 <span className="text-gray-600">Confidence:</span>
-                                 <p className="font-semibold">{signal.confidence}%</p>
-                              </div>
-                           </div>
-
-                           {!signal.posted && (
-                              <button
-                                 onClick={() => handlePostToGroup(signal)}
-                                 disabled={isPosting === signal.id}
-                                 className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-                              >
-                                 {isPosting === signal.id ? 'Posting...' : '📤 Post to Telegram Group'}
-                              </button>
-                           )}
-                        </div>
-                     ))}
-                  </div>
-               )}
-            </div>
-         </div>
-      </div>
+                        ))}
+                     </div>
+                  )
+               }
+            </div >
+         </div >
+      </div >
    );
 }
