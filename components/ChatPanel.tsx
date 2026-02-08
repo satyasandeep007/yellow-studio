@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 type ChatPanelProps = {
   prompt: string;
   onPromptChange: (value: string) => void;
@@ -12,6 +14,13 @@ type ChatPanelProps = {
   }[];
 };
 
+const SUGGESTED_PROMPTS = [
+  "Create a modern landing page for a SaaS product",
+  "Build a portfolio website with dark theme",
+  "Design an e-commerce product showcase page",
+  "Make a restaurant menu with image gallery",
+];
+
 export function ChatPanel({
   prompt,
   onPromptChange,
@@ -20,20 +29,37 @@ export function ChatPanel({
   canGenerate,
   messages,
 }: ChatPanelProps) {
+  const [selectedModel, setSelectedModel] = useState<"gpt-4" | "claude-3">("gpt-4");
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto w-full max-w-3xl space-y-6">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500">
-                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+            <div className="flex flex-col items-center justify-center py-12">
+              {/* Welcome Message */}
+              <div className="mb-8 text-center">
+                <h1 className="text-4xl font-bold text-gray-900 mb-2">Hello there!</h1>
+                <p className="text-lg text-gray-500">How can I help you today?</p>
               </div>
-              <h2 className="text-2xl font-semibold text-gray-900">Start Building</h2>
-              <p className="mt-2 text-sm text-gray-600">Describe your website and watch it come to life</p>
+
+              {/* Suggested Prompts */}
+              <div className="grid grid-cols-2 gap-3 w-full max-w-2xl mb-6">
+                {SUGGESTED_PROMPTS.map((suggestedPrompt, index) => (
+                  <button
+                    key={index}
+                    onClick={() => onPromptChange(suggestedPrompt)}
+                    className="group relative rounded-xl border border-gray-200 bg-white p-4 text-left text-sm text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+                  >
+                    <div className="flex items-start gap-3">
+                      <svg className="h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-purple-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      <span className="leading-snug">{suggestedPrompt}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             messages.map((message) => {
@@ -124,9 +150,27 @@ export function ChatPanel({
               )}
             </button>
           </div>
-          <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-            <span>Press Enter to send, Shift + Enter for new line</span>
-            {canGenerate && <span className="text-purple-400">Cost: 0.08 USDC per generation</span>}
+          <div className="mt-3 flex items-center justify-between">
+            {/* Model Selector */}
+            <div className="flex items-center gap-2">
+              <button className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span className="font-medium">
+                  {selectedModel === "gpt-4" ? "GPT-4 Turbo" : "Claude 3.5 Sonnet"}
+                </span>
+                <svg className="h-3 w-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <span className="text-xs text-gray-400">Press Enter to send</span>
+            </div>
+
+            {/* Cost Info */}
+            {canGenerate && (
+              <span className="text-xs text-purple-600 font-medium">0.08 USDC per generation</span>
+            )}
           </div>
         </div>
       </div>

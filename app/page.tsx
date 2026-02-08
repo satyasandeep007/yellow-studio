@@ -27,25 +27,12 @@ export default function Home() {
   const [lastUpdatedLabel, setLastUpdatedLabel] = useState("Awaiting render");
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
-  const [messages, setMessages] = useState([
-    {
-      id: "sys-1",
-      role: "system" as const,
-      content: "Tell me the vibe, sections, and any must-have interactions.",
-    },
-    {
-      id: "user-1",
-      role: "user" as const,
-      content:
-        "Create a neon event landing page with countdown and registration form.",
-    },
-    {
-      id: "assistant-1",
-      role: "assistant" as const,
-      content: "Drafting hero, schedule, speakers, and CTA. Rendering preview now.",
-      meta: "Generation #1 • 0.08 USDC",
-    },
-  ]);
+  const [messages, setMessages] = useState<Array<{
+    id: string;
+    role: "system" | "user" | "assistant";
+    content: string;
+    meta?: string;
+  }>>([]);
 
   const [walletAddress, setWalletAddress] = useState("");
   const [projects, setProjects] = useState([
