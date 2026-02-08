@@ -3,7 +3,15 @@
 import { BuilderHeader } from "@/components/BuilderHeader";
 import { ChatPanel } from "@/components/ChatPanel";
 import { PreviewPanel } from "@/components/PreviewPanel";
-import { useState } from "react";
+import { WalletModal } from "@/components/WalletModal";
+import { useEffect, useMemo, useState } from "react";
+
+type EthereumProvider = {
+  isMetaMask?: boolean;
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  on?: (event: string, handler: (...args: unknown[]) => void) => void;
+  removeListener?: (event: string, handler: (...args: unknown[]) => void) => void;
+};
 
 export default function Home() {
   const [prompt, setPrompt] = useState(
@@ -16,6 +24,8 @@ export default function Home() {
   const [sessionBalance, setSessionBalance] = useState(0);
   const [generationCount, setGenerationCount] = useState(0);
   const [lastUpdatedLabel, setLastUpdatedLabel] = useState("Awaiting render");
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [walletError, setWalletError] = useState<string | null>(null);
   const [messages, setMessages] = useState([
     {
       id: "sys-1",
@@ -36,14 +46,58 @@ export default function Home() {
     },
   ]);
 
-  const walletAddress = "0xA13...9B2";
+  const [walletAddress, setWalletAddress] = useState("");
   const canGenerate = walletConnected && sessionActive;
 
-  const handleConnectWallet = () => setWalletConnected(true);
+  const ethereum = useMemo(() => {
+    if (typeof window === "undefined") return undefined;
+    return (window as { ethereum?: EthereumProvider }).ethereum;
+  }, []);
+
+  const hasProvider = Boolean(ethereum);
+
+  const shortenAddress = (address: string) =>
+    `${address.slice(0, 6)}...${address.slice(-4)}`;
+
+  const handleConnectWallet = () => {
+    setWalletError(null);
+    setWalletModalOpen(true);
+  };
   const handleDisconnectWallet = () => {
     setWalletConnected(false);
     setSessionActive(false);
     setSessionBalance(0);
+    setWalletAddress("");
+  };
+  const handleConnectMetaMask = async () => {
+    const provider = ethereum;
+    if (!provider) {
+      setWalletError("MetaMask not detected. Install the extension to connect.");
+      return;
+    }
+    try {
+      setWalletError(null);
+      const requested = (await provider.request({
+        method: "eth_requestAccounts",
+      })) as string[];
+      const accounts =
+        requested?.length > 0
+          ? requested
+          : ((await provider.request({ method: "eth_accounts" })) as string[]);
+      if (!accounts?.length) {
+        setWalletError("No accounts returned from MetaMask.");
+        return;
+      }
+      setWalletAddress(shortenAddress(accounts[0]));
+      setWalletConnected(true);
+      setWalletModalOpen(false);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "MetaMask connection was rejected.";
+      setWalletError(message);
+    }
   };
   const handleStartSession = () => {
     if (!walletConnected) return;
@@ -177,6 +231,30 @@ export default function Home() {
     }, 450);
   };
 
+  useEffect(() => {
+    if (!ethereum) return;
+    const handleAccountsChanged = (accounts: unknown) => {
+      const list = Array.isArray(accounts) ? (accounts as string[]) : [];
+      if (!list.length) {
+        setWalletConnected(false);
+        setWalletAddress("");
+        setSessionActive(false);
+        return;
+      }
+      setWalletAddress(shortenAddress(list[0]));
+      setWalletConnected(true);
+    };
+
+    ethereum.request({ method: "eth_accounts" }).then((accounts) => {
+      handleAccountsChanged(accounts);
+    });
+
+    ethereum.on?.("accountsChanged", handleAccountsChanged);
+    return () => {
+      ethereum.removeListener?.("accountsChanged", handleAccountsChanged);
+    };
+  }, [ethereum]);
+
   return (
     <div className="min-h-screen px-6 py-6 text-white">
       <main className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-[1440px] flex-col gap-6">
@@ -206,6 +284,13 @@ export default function Home() {
           />
         </section>
       </main>
+      <WalletModal
+        open={walletModalOpen}
+        onClose={() => setWalletModalOpen(false)}
+        onConnectMetaMask={handleConnectMetaMask}
+        hasProvider={hasProvider}
+        errorMessage={walletError}
+      />
     </div>
   );
 }
