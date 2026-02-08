@@ -30,8 +30,16 @@ CRITICAL RULES:
 
 Return ONLY the HTML code starting with <!DOCTYPE html> and ending with </html>. Nothing else.`;
 
+      // Model mapping
+      let modelName = "gpt-4-turbo-preview";
+      if (model === "gpt-3.5-turbo") {
+         modelName = "gpt-3.5-turbo";
+      } else if (model === "gpt-4o") {
+         modelName = "gpt-4o";
+      }
+
       const completion = await openai.chat.completions.create({
-         model: model === "claude-3" ? "gpt-4-turbo-preview" : "gpt-4-turbo-preview",
+         model: modelName,
          messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: prompt },
@@ -41,10 +49,16 @@ Return ONLY the HTML code starting with <!DOCTYPE html> and ending with </html>.
       });
 
       const generatedCode = completion.choices[0]?.message?.content || "";
+      const usage = completion.usage;
 
       return NextResponse.json({
          code: generatedCode,
          model: model || "gpt-4",
+         tokens: {
+            prompt: usage?.prompt_tokens || 0,
+            completion: usage?.completion_tokens || 0,
+            total: usage?.total_tokens || 0,
+         },
       });
    } catch (error) {
       console.error("OpenAI API Error:", error);
