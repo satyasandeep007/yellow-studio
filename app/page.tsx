@@ -3,6 +3,7 @@
 import { BuilderHeader } from "@/components/BuilderHeader";
 import { ChatPanel } from "@/components/ChatPanel";
 import { PreviewPanel } from "@/components/PreviewPanel";
+import { Sidebar } from "@/components/Sidebar";
 import { WalletModal } from "@/components/WalletModal";
 import { useEffect, useMemo, useState } from "react";
 
@@ -47,6 +48,12 @@ export default function Home() {
   ]);
 
   const [walletAddress, setWalletAddress] = useState("");
+  const [projects, setProjects] = useState([
+    { id: "1", name: "Neon Event Landing", updatedAt: "2 hours ago" },
+    { id: "2", name: "Portfolio Site", updatedAt: "Yesterday" },
+    { id: "3", name: "Product Launch Page", updatedAt: "3 days ago" },
+  ]);
+  const [currentProjectId, setCurrentProjectId] = useState("1");
   const canGenerate = walletConnected && sessionActive;
 
   const ethereum = useMemo(() => {
@@ -106,6 +113,25 @@ export default function Home() {
   };
   const handleEndSession = () => {
     setSessionActive(false);
+  };
+
+  const handleNewProject = () => {
+    const newProject = {
+      id: String(Date.now()),
+      name: "Untitled Project",
+      updatedAt: "Just now",
+    };
+    setProjects([newProject, ...projects]);
+    setCurrentProjectId(newProject.id);
+    setMessages([]);
+    setPreviewHtml("");
+    setGenerationCount(0);
+    setPrompt("");
+  };
+
+  const handleSelectProject = (projectId: string) => {
+    setCurrentProjectId(projectId);
+    // In a real app, load project data from DB
   };
 
   const handleGenerate = () => {
@@ -256,7 +282,7 @@ export default function Home() {
   }, [ethereum]);
 
   return (
-    <div className="flex h-screen flex-col bg-[#0a0e14] text-white">
+    <div className="flex h-screen flex-col bg-white">
       {/* Header */}
       <BuilderHeader
         walletConnected={walletConnected}
@@ -269,10 +295,18 @@ export default function Home() {
         onEndSession={handleEndSession}
       />
 
-      {/* Main Content: Split View */}
+      {/* Main Content: Sidebar + Split View */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left: Chat Panel */}
-        <div className="w-1/2 border-r border-gray-800">
+        {/* Sidebar */}
+        <Sidebar
+          projects={projects}
+          currentProjectId={currentProjectId}
+          onSelectProject={handleSelectProject}
+          onNewProject={handleNewProject}
+        />
+
+        {/* Chat Panel */}
+        <div className="flex-1 border-r border-gray-200">
           <ChatPanel
             prompt={prompt}
             onPromptChange={setPrompt}
@@ -283,8 +317,8 @@ export default function Home() {
           />
         </div>
 
-        {/* Right: Preview Panel */}
-        <div className="w-1/2">
+        {/* Preview Panel */}
+        <div className="flex-1">
           <PreviewPanel
             html={previewHtml}
             versionLabel={`v${generationCount + 1}`}
