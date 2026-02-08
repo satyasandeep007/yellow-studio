@@ -14,6 +14,7 @@ Chat‑driven AI website builder with live preview, project persistence, and ses
 - Streaming HTML generation
 - Projects + messages + generations stored in Supabase
 - Session tracking (balance + tokens)
+- Yellow SDK stubs for state channels (Nitrolite sandbox)
 - Sessions list page
 
 ## Project structure (key paths)
@@ -24,6 +25,7 @@ Chat‑driven AI website builder with live preview, project persistence, and ses
 - `app/api/db/**` – Supabase persistence endpoints
 - `lib/hooks/*` – wallet/session, projects, generation hooks
 - `public/submission/*` – logo + cover assets
+- `yellow/yellow.ts` – Yellow SDK integration helpers
 
 ## Local setup
 1) Install deps
@@ -54,6 +56,11 @@ Open http://localhost:3000
 3) Create a project.
 4) Prompt → generate → preview updates.
 5) End session.
+
+## Yellow SDK (Nitrolite sandbox)
+- Integration helpers live in `yellow/yellow.ts`.
+- Current integration is a stub to be wired into session start/pay/settle flows.
+- Uses the Yellow sandbox websocket for testing.
 
 ## Build
 ```bash
