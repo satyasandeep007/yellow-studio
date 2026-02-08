@@ -25,10 +25,12 @@ export function BuilderHeader({
     <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
       {/* Left: Logo & Project Name */}
       <div className="flex items-center gap-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-pink-500">
-          <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-900">
+          <img
+            src="/submission/logo.svg"
+            alt="Yellow Studio"
+            className="h-6 w-6"
+          />
         </div>
         <div>
           <h1 className="text-sm font-semibold text-gray-900">Yellow Studio</h1>

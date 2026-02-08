@@ -82,11 +82,9 @@ export function Sidebar({
          {/* Sidebar Footer */}
          <div className="border-t border-gray-200 p-4">
             <div className="flex items-center gap-3 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 p-3">
-               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
-                  <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-               </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-900">
+               <img src="/submission/logo.svg" alt="Yellow Studio" className="h-6 w-6" />
+            </div>
                <div className="flex-1">
                   <div className="text-sm font-semibold text-gray-900">Yellow Studio</div>
                   <div className="text-xs text-gray-600">Website Builder</div>

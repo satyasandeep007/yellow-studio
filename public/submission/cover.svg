@@ -1,0 +1,37 @@
+<svg width="640" height="360" viewBox="0 0 640 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ys-cover" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B0B0B"/>
+      <stop offset="100%" stop-color="#1B1B1B"/>
+    </linearGradient>
+    <linearGradient id="ys-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFE45C"/>
+      <stop offset="100%" stop-color="#FFB800"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="360" rx="28" fill="url(#ys-cover)"/>
+  <circle cx="520" cy="80" r="140" fill="url(#ys-grad)" opacity="0.14"/>
+  <circle cx="120" cy="300" r="160" fill="url(#ys-grad)" opacity="0.12"/>
+
+  <g transform="translate(48,72)">
+    <rect width="96" height="96" rx="24" fill="#111111"/>
+    <path d="M26 72 L48 36 L70 72"
+          stroke="url(#ys-grad)"
+          stroke-width="8"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+    <circle cx="48" cy="26" r="7" fill="url(#ys-grad)"/>
+  </g>
+
+  <text x="170" y="130" font-family="Space Grotesk, Arial, sans-serif"
+        font-size="40" font-weight="700" fill="#FFFFFF">
+    Yellow Studio
+  </text>
+  <text x="170" y="170" font-family="Space Grotesk, Arial, sans-serif"
+        font-size="18" font-weight="500" fill="#D5D5D5" letter-spacing="1.5">
+    AI WEB BUILDER
+  </text>
+
+  <rect x="170" y="210" width="210" height="10" rx="5" fill="url(#ys-grad)"/>
+</svg>
