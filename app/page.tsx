@@ -37,12 +37,10 @@ export default function Home() {
   }>>([]);
 
   const [walletAddress, setWalletAddress] = useState("");
-  const [projects, setProjects] = useState([
-    { id: "1", name: "Neon Event Landing", updatedAt: "2 hours ago" },
-    { id: "2", name: "Portfolio Site", updatedAt: "Yesterday" },
-    { id: "3", name: "Product Launch Page", updatedAt: "3 days ago" },
-  ]);
-  const [currentProjectId, setCurrentProjectId] = useState("1");
+  const [projects, setProjects] = useState<
+    Array<{ id: string; name: string; updated_at?: string }>
+  >([]);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<"gpt-4" | "gpt-3.5-turbo" | "gpt-4o">("gpt-4");
   const [totalTokens, setTotalTokens] = useState(0);
   const canGenerate = walletConnected && sessionActive;
@@ -66,6 +64,11 @@ export default function Home() {
     setSessionActive(false);
     setSessionBalance(0);
     setWalletAddress("");
+    setProjects([]);
+    setCurrentProjectId(null);
+    setMessages([]);
+    setPreviewHtml("");
+    setGenerationCount(0);
   };
   const handleConnectMetaMask = async () => {
     const provider = ethereum;
@@ -107,26 +110,44 @@ export default function Home() {
   };
 
   const handleNewProject = () => {
-    const newProject = {
-      id: String(Date.now()),
-      name: "Untitled Project",
-      updatedAt: "Just now",
-    };
-    setProjects([newProject, ...projects]);
-    setCurrentProjectId(newProject.id);
-    setMessages([]);
-    setPreviewHtml("");
-    setGenerationCount(0);
-    setPrompt("");
+    if (!walletAddress) return;
+    fetch("/api/db/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ walletAddress, name: "Untitled Project" }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.project) return;
+        setProjects((prev) => [data.project, ...prev]);
+        setCurrentProjectId(data.project.id);
+        setMessages([]);
+        setPreviewHtml("");
+        setGenerationCount(0);
+        setPrompt("");
+      })
+      .catch(() => {});
   };
 
   const handleSelectProject = (projectId: string) => {
     setCurrentProjectId(projectId);
-    // In a real app, load project data from DB
+    fetch(`/api/db/project/${projectId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.project?.latest_html) {
+          setPreviewHtml(data.project.latest_html);
+        } else {
+          setPreviewHtml("");
+        }
+        setMessages(data.messages || []);
+        setGenerationCount(data.generationCount || 0);
+        setTotalTokens(data.totals?.tokens || 0);
+      })
+      .catch(() => {});
   };
 
   const handleGenerate = async () => {
-    if (!canGenerate || !prompt.trim()) return;
+    if (!canGenerate || !prompt.trim() || !currentProjectId) return;
     setIsGenerating(true);
     setPreviewMode("code");
     const sanitizedPrompt = prompt.trim();
@@ -148,6 +169,16 @@ export default function Home() {
         content: sanitizedPrompt,
       },
     ]);
+    fetch("/api/db/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        projectId: currentProjectId,
+        role: "user",
+        content: sanitizedPrompt,
+        tokens: 0,
+      }),
+    }).catch(() => {});
 
     // Clear the prompt input
     setPrompt("");
@@ -234,21 +265,56 @@ export default function Home() {
       setGenerationCount(nextCount);
       setLastUpdatedLabel("Updated just now");
       setSessionBalance((prev) => Math.max(0, Number((prev - 0.08).toFixed(2))));
+      if (tokens?.total) {
+        setTotalTokens((prev) => prev + tokens.total);
+      }
       setPreviewMode("preview");
 
       // Add assistant message
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-${Date.now()}`,
+      const assistantMessage = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant" as const,
+        content: previewHtml
+          ? "Applied your latest change to the existing page. Check the preview to confirm the update."
+          : `Generated your ${sanitizedPrompt.toLowerCase()}. Check the preview panel to see the result!`,
+        meta: `Generation #${nextCount} • 0.08 USDC`,
+        tokens: tokens?.total || 0,
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      fetch("/api/db/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: currentProjectId,
           role: "assistant",
-          content: previewHtml
-            ? "Applied your latest change to the existing page. Check the preview to confirm the update."
-            : `Generated your ${sanitizedPrompt.toLowerCase()}. Check the preview panel to see the result!`,
-          meta: `Generation #${nextCount} • 0.08 USDC`,
+          content: assistantMessage.content,
+          tokens: assistantMessage.tokens || 0,
+        }),
+      }).catch(() => {});
+
+      fetch("/api/db/generations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: currentProjectId,
+          prompt: sanitizedPrompt,
+          html: generatedCode,
+          model: selectedModel,
           tokens: tokens?.total || 0,
-        },
-      ]);
+          costUsdc: 0.08,
+        }),
+      }).catch(() => {});
+
+    fetch("/api/db/projects/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        projectId: currentProjectId,
+        latestHtml: generatedCode,
+        name: sanitizedPrompt.length > 60 ? `${sanitizedPrompt.slice(0, 57)}...` : sanitizedPrompt,
+      }),
+    }).catch(() => {});
     } catch (error) {
       console.error("Generation error:", error);
 
@@ -290,6 +356,34 @@ export default function Home() {
     };
   }, [ethereum]);
 
+  useEffect(() => {
+    if (!walletConnected || !walletAddress) return;
+    fetch("/api/db/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ walletAddress }),
+    })
+      .then(() => fetch(`/api/db/projects?wallet=${walletAddress}`))
+      .then((res) => res.json())
+      .then((data) => {
+        const list = data.projects || [];
+        setProjects(list);
+        if (list.length > 0) {
+          setCurrentProjectId(list[0].id);
+          return fetch(`/api/db/project/${list[0].id}`);
+        }
+        return null;
+      })
+      .then((res) => (res ? res.json() : null))
+      .then((data) => {
+        if (!data) return;
+        setPreviewHtml(data.project?.latest_html || "");
+        setMessages(data.messages || []);
+        setGenerationCount(data.generationCount || 0);
+      })
+      .catch(() => {});
+  }, [walletConnected, walletAddress]);
+
   return (
     <div className="flex h-screen flex-col bg-white">
       {/* Header */}
@@ -309,8 +403,12 @@ export default function Home() {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <Sidebar
-          projects={projects}
-          currentProjectId={currentProjectId}
+          projects={projects.map((project) => ({
+            id: project.id,
+            name: project.name,
+            updatedAt: project.updated_at || "",
+          }))}
+          currentProjectId={currentProjectId || ""}
           onSelectProject={handleSelectProject}
           onNewProject={handleNewProject}
         />

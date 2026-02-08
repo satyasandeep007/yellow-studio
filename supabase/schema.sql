@@ -65,3 +65,10 @@ drop trigger if exists projects_updated_at on public.projects;
 create trigger projects_updated_at
 before update on public.projects
 for each row execute function public.set_updated_at();
+
+alter table public.users disable row level security;
+alter table public.projects disable row level security;
+alter table public.messages disable row level security;
+alter table public.generations disable row level security;
+alter table public.yellow_sessions disable row level security;
+alter table public.transactions disable row level security;
