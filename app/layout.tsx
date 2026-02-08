@@ -13,7 +13,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Chainva AI",
+  title: "Yellow Studio",
   description: "Chat-driven AI website builder with live preview.",
 };
 

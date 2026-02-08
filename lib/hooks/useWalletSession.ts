@@ -86,6 +86,7 @@ export const useWalletSession = () => {
   const handleEndSession = () => {
     if (!sessionId) {
       setSessionActive(false);
+      setSessionTokens(0);
       return;
     }
     updateSession({
@@ -97,10 +98,12 @@ export const useWalletSession = () => {
       .then(() => {
         setSessionActive(false);
         setSessionId(null);
+        setSessionTokens(0);
       })
       .catch(() => {
         setSessionActive(false);
         setSessionId(null);
+        setSessionTokens(0);
       });
   };
 

@@ -48,7 +48,7 @@ export default function ProjectsIndex() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-6">
       <div className="max-w-md text-center">
-        <h1 className="text-2xl font-semibold text-gray-900">Chainva AI</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Yellow Studio</h1>
         <p className="mt-2 text-sm text-gray-500">{status}</p>
       </div>
     </div>

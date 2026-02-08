@@ -108,7 +108,7 @@ export function PreviewPanel({
               {/* Preview View */}
               <iframe
                 className={`absolute inset-0 h-full w-full bg-white ${viewMode === "preview" ? "block" : "hidden"}`}
-                title="Chainva Preview"
+                title="Yellow Studio"
                 sandbox="allow-scripts allow-forms allow-same-origin"
                 srcDoc={html}
               />

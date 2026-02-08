@@ -48,8 +48,8 @@ export function Sidebar({
                         key={project.id}
                         onClick={() => onSelectProject(project.id)}
                         className={`group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition ${currentProjectId === project.id
-                              ? 'bg-gray-200 text-gray-900'
-                              : 'text-gray-700 hover:bg-gray-100'
+                           ? 'bg-gray-200 text-gray-900'
+                           : 'text-gray-700 hover:bg-gray-100'
                            }`}
                      >
                         <svg className="h-4 w-4 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@ export function Sidebar({
                   </svg>
                </div>
                <div className="flex-1">
-                  <div className="text-sm font-semibold text-gray-900">Chainva AI</div>
+                  <div className="text-sm font-semibold text-gray-900">Yellow Studio</div>
                   <div className="text-xs text-gray-600">Website Builder</div>
                </div>
             </div>

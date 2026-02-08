@@ -31,7 +31,7 @@ export function BuilderHeader({
           </svg>
         </div>
         <div>
-          <h1 className="text-sm font-semibold text-gray-900">Chainva AI</h1>
+          <h1 className="text-sm font-semibold text-gray-900">Yellow Studio</h1>
           <p className="text-xs text-gray-500">AI Website Builder</p>
         </div>
       </div>
@@ -39,7 +39,7 @@ export function BuilderHeader({
       {/* Right: Session & Wallet Controls */}
       <div className="flex items-center gap-3">
         {/* Token Usage */}
-        {sessionTokens > 0 && (
+        {sessionActive && sessionTokens > 0 && (
           <div className="flex items-center gap-2 rounded-lg bg-purple-50 px-3 py-1.5 text-sm">
             <svg className="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
