@@ -1,21 +1,75 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 
+const normalizeAddress = (address: string) => address.trim().toLowerCase();
+const shortenAddress = (address: string) =>
+  `${address.slice(0, 6)}...${address.slice(-4)}`;
+
 async function getOrCreateUser(walletAddress: string) {
+  const normalized = normalizeAddress(walletAddress);
   const { data: existing } = await supabaseServer
     .from("users")
     .select("id")
-    .eq("wallet_address", walletAddress)
+    .or(`wallet_address.eq.${walletAddress},wallet_address.eq.${normalized}`)
     .single();
   if (existing?.id) return existing.id;
 
+  const legacyAddress = shortenAddress(walletAddress);
+  const legacyNormalized = shortenAddress(normalized);
+  const { data: legacy } = await supabaseServer
+    .from("users")
+    .select("id")
+    .or(`wallet_address.eq.${legacyAddress},wallet_address.eq.${legacyNormalized}`)
+    .single();
+  if (legacy?.id) {
+    const { data: updated, error: updateError } = await supabaseServer
+      .from("users")
+      .update({ wallet_address: normalized })
+      .eq("id", legacy.id)
+      .select("id")
+      .single();
+    if (updateError) throw new Error(updateError.message);
+    return updated.id;
+  }
+
   const { data: created, error } = await supabaseServer
     .from("users")
-    .insert({ wallet_address: walletAddress })
+    .insert({ wallet_address: normalized })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
   return created.id;
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const walletAddress = searchParams.get("wallet");
+  if (!walletAddress) {
+    return NextResponse.json({ error: "wallet is required" }, { status: 400 });
+  }
+
+  const normalized = normalizeAddress(walletAddress);
+  const { data: user } = await supabaseServer
+    .from("users")
+    .select("id")
+    .or(`wallet_address.eq.${walletAddress},wallet_address.eq.${normalized}`)
+    .single();
+
+  if (!user?.id) {
+    return NextResponse.json({ sessions: [] });
+  }
+
+  const { data, error } = await supabaseServer
+    .from("yellow_sessions")
+    .select("id,balance_usdc,total_tokens,status,created_at,ended_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ sessions: data || [] });
 }
 
 export async function POST(request: NextRequest) {

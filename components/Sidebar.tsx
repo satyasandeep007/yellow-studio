@@ -7,6 +7,7 @@ type SidebarProps = {
    currentProjectId?: string;
    onSelectProject: (id: string) => void;
    onNewProject: () => void;
+   showSessionsLink?: boolean;
 };
 
 export function Sidebar({
@@ -14,6 +15,7 @@ export function Sidebar({
    currentProjectId,
    onSelectProject,
    onNewProject,
+   showSessionsLink = true,
 }: SidebarProps) {
    return (
       <div className="flex h-full w-64 flex-col border-r border-gray-200 bg-gray-50">
@@ -61,6 +63,20 @@ export function Sidebar({
                   ))
                )}
             </div>
+
+            {showSessionsLink && (
+               <div className="mt-6 px-3">
+                  <a
+                     href="/user/sessions"
+                     className="flex items-center gap-2 rounded-lg border border-dashed border-gray-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                  >
+                     <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                     </svg>
+                     Sessions
+                  </a>
+               </div>
+            )}
          </div>
 
          {/* Sidebar Footer */}
