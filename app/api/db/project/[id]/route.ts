@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params?: { id?: string } }
-) {
-  const fromParams = params?.id;
+export async function GET(request: NextRequest) {
   const fromPath = request.url.split("/api/db/project/")[1]?.split("?")[0];
   const fromQuery = new URL(request.url).searchParams.get("id");
-  const projectId = fromParams || fromPath || fromQuery;
+  const projectId = fromPath || fromQuery;
   if (!projectId) {
     return NextResponse.json({ error: "project id required" }, { status: 400 });
   }
