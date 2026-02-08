@@ -44,6 +44,12 @@ export const useProjects = ({
     setProjectTokens(0);
   };
 
+  const resetAll = () => {
+    setProjects([]);
+    setCurrentProjectId(null);
+    resetProjectState();
+  };
+
   const handleNewProject = async (name: string) => {
     const data = await createProject(walletAddress, name);
     if (!data.project) return null;
@@ -75,6 +81,14 @@ export const useProjects = ({
       .then((data) => {
         const list = data.projects || [];
         setProjects(list);
+        const hasUrlProject =
+          urlProjectId && list.some((project) => project.id === urlProjectId);
+        if (urlProjectId && !hasUrlProject) {
+          setCurrentProjectId(null);
+          resetProjectState();
+          router.replace("/user/projects");
+          return null;
+        }
         const fallbackId = urlProjectId || list[0]?.id;
         if (fallbackId) {
           setCurrentProjectId(fallbackId);
@@ -103,5 +117,6 @@ export const useProjects = ({
     handleNewProject,
     handleSelectProject,
     resetProjectState,
+    resetAll,
   };
 };

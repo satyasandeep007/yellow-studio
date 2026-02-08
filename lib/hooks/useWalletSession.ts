@@ -9,7 +9,10 @@ type EthereumProvider = {
   removeListener?: (event: string, handler: (...args: unknown[]) => void) => void;
 };
 
-export const useWalletSession = () => {
+export const useWalletSession = (options?: {
+  onDisconnect?: () => void;
+  onWalletChange?: (address: string) => void;
+}) => {
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
   const [walletModalOpen, setWalletModalOpen] = useState(false);
@@ -38,6 +41,7 @@ export const useWalletSession = () => {
     setSessionId(null);
     setSessionTokens(0);
     setWalletAddress("");
+    options?.onDisconnect?.();
   };
 
   const handleConnectMetaMask = async () => {
@@ -125,10 +129,12 @@ export const useWalletSession = () => {
         setWalletConnected(false);
         setWalletAddress("");
         setSessionActive(false);
+        options?.onDisconnect?.();
         return;
       }
       setWalletAddress(list[0]);
       setWalletConnected(true);
+      options?.onWalletChange?.(list[0]);
     };
 
     ethereum.request({ method: "eth_accounts" }).then((accounts) => {

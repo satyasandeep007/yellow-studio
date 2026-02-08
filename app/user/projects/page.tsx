@@ -10,7 +10,8 @@ import { useGeneration } from "@/lib/hooks/useGeneration";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { useWalletSession } from "@/lib/hooks/useWalletSession";
 import { connectToYellow } from "@/yellow/yellow";
-import { useEffect, useState } from "react";
+import { useEffect,useRef, useState } from "react";
+
 
 export default function ProjectsPage() {
   const [prompt, setPrompt] = useState(
@@ -27,6 +28,7 @@ export default function ProjectsPage() {
     console.log('connecting to yellow network...');
     connectToYellow();
   }, []);
+  const resetRef = useRef<null | (() => void)>(null);
 
   const {
     hasProvider,
@@ -46,7 +48,10 @@ export default function ProjectsPage() {
     handleStartSession,
     handleEndSession,
     setWalletModalOpen,
-  } = useWalletSession();
+  } = useWalletSession({
+    onDisconnect: () => resetRef.current?.(),
+    onWalletChange: () => resetRef.current?.(),
+  });
 
   const {
     projects,
@@ -63,11 +68,15 @@ export default function ProjectsPage() {
     handleNewProject,
     handleSelectProject,
     resetProjectState,
+    resetAll,
   } = useProjects({
     walletConnected,
     walletAddress,
     urlProjectId: null,
   });
+  useEffect(() => {
+    resetRef.current = resetAll;
+  }, [resetAll]);
 
   const canGenerate = walletConnected && sessionActive;
 
