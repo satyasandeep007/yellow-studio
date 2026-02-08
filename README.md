@@ -11,6 +11,7 @@ Yellow Studio is a chat‑driven AI website builder with live preview, project p
 <br>
 
 ## Demo
+YOUTUBE LINK: https://youtu.be/bQ9x8hGnAVI
 
 
 
