@@ -9,7 +9,9 @@ import { ProjectShell } from "@/components/project/ProjectShell";
 import { useGeneration } from "@/lib/hooks/useGeneration";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { useWalletSession } from "@/lib/hooks/useWalletSession";
-import { useEffect, useRef, useState } from "react";
+import { connectToYellow } from "@/yellow/yellow";
+import { useEffect,useRef, useState } from "react";
+
 
 export default function ProjectsPage() {
   const [prompt, setPrompt] = useState(
@@ -21,6 +23,11 @@ export default function ProjectsPage() {
     "gpt-4" | "gpt-3.5-turbo" | "gpt-4o"
   >("gpt-4");
 
+
+  useEffect(() => {
+    console.log('connecting to yellow network...');
+    connectToYellow();
+  }, []);
   const resetRef = useRef<null | (() => void)>(null);
 
   const {
@@ -142,7 +149,7 @@ export default function ProjectsPage() {
           onPromptChange={setPrompt}
           onGenerate={handleGenerate}
           isGenerating={isGenerating}
-          canGenerate={canGenerate && Boolean(currentProjectId)}
+          canGenerate={canGenerate}
           messages={messages}
           selectedModel={selectedModel}
           onModelChange={setSelectedModel}
