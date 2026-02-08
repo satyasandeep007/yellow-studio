@@ -18,6 +18,7 @@ import {
   updateSession,
   upsertSession,
 } from "@/lib/projectApi";
+import { streamGeneration } from "@/lib/streamGeneration";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -220,75 +221,15 @@ export default function ProjectPage() {
     setPrompt("");
 
     try {
-      const response = await fetch("/api/chat/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const { generatedCode, tokens } = await streamGeneration(
+        {
           prompt: sanitizedPrompt,
           model: selectedModel,
           messages: historyForApi,
           currentCode: previewHtml || "",
-          stream: true,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const contentType = response.headers.get("content-type") || "";
-      let generatedCode = "";
-      let tokens: { total?: number } | undefined;
-
-      if (contentType.includes("text/event-stream") && response.body) {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-        let streamDone = false;
-
-        while (!streamDone) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const parts = buffer.split("\n\n");
-          buffer = parts.pop() ?? "";
-
-          for (const part of parts) {
-            const line = part.trim();
-            if (!line.startsWith("data:")) continue;
-            const data = line.replace(/^data:\s*/, "");
-            if (data === "[DONE]") {
-              streamDone = true;
-              break;
-            }
-            const payload = JSON.parse(data) as {
-              type?: string;
-              content?: string;
-              usage?: { total_tokens?: number };
-              message?: string;
-            };
-            if (payload.type === "delta" && payload.content) {
-              generatedCode += payload.content;
-              setPreviewHtml(generatedCode);
-            } else if (payload.type === "usage") {
-              tokens = { total: payload.usage?.total_tokens ?? 0 };
-            } else if (payload.type === "error") {
-              throw new Error(payload.message || "Stream error");
-            }
-          }
-        }
-      } else {
-        const data = await response.json();
-        generatedCode = data.code;
-        tokens = data.tokens;
-        setPreviewHtml(generatedCode);
-      }
-
-      if (!generatedCode) {
-        throw new Error("No code returned from the model.");
-      }
+        },
+        setPreviewHtml
+      );
 
       setGenerationCount(nextCount);
       setLastUpdatedLabel("Updated just now");
@@ -381,6 +322,7 @@ export default function ProjectPage() {
       setIsGenerating(false);
     }
   };
+
 
   useEffect(() => {
     if (!ethereum) return;
