@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     const userId = await getOrCreateUser(walletAddress);
     const { data: existing } = await supabaseServer
       .from("yellow_sessions")
-      .select("id,balance_usdc,status")
+      .select("id,balance_usdc,status,total_tokens")
       .eq("user_id", userId)
       .eq("status", "open")
       .single();
@@ -42,9 +42,10 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: userId,
         balance_usdc: balanceUsdc ?? 0,
+        total_tokens: 0,
         status: "open",
       })
-      .select("id,balance_usdc,status")
+      .select("id,balance_usdc,status,total_tokens")
       .single();
 
     if (error) {
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const { sessionId, balanceUsdc, status } = await request.json();
+  const { sessionId, balanceUsdc, status, totalTokens } = await request.json();
   if (!sessionId) {
     return NextResponse.json({ error: "sessionId required" }, { status: 400 });
   }
@@ -68,11 +69,12 @@ export async function PATCH(request: NextRequest) {
     .from("yellow_sessions")
     .update({
       balance_usdc: balanceUsdc,
+      total_tokens: totalTokens,
       status,
       ended_at: status === "closed" ? new Date().toISOString() : null,
     })
     .eq("id", sessionId)
-    .select("id,balance_usdc,status")
+    .select("id,balance_usdc,status,total_tokens")
     .single();
 
   if (error) {

@@ -40,6 +40,7 @@ create table if not exists public.yellow_sessions (
   user_id uuid references public.users(id) on delete cascade,
   session_address text,
   balance_usdc numeric(10,4),
+  total_tokens integer default 0,
   status text default 'open',
   created_at timestamptz not null default now(),
   ended_at timestamptz

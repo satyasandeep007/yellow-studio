@@ -48,7 +48,8 @@ export default function ProjectPage() {
   >([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<"gpt-4" | "gpt-3.5-turbo" | "gpt-4o">("gpt-4");
-  const [totalTokens, setTotalTokens] = useState(0);
+  const [projectTokens, setProjectTokens] = useState(0);
+  const [sessionTokens, setSessionTokens] = useState(0);
   const canGenerate = walletConnected && sessionActive;
   const currentProjectName =
     projects.find((project) => project.id === currentProjectId)?.name || "";
@@ -122,6 +123,7 @@ export default function ProjectPage() {
         setSessionId(data.session.id);
         setSessionBalance(Number(data.session.balance_usdc || 0));
         setSessionActive(true);
+        setSessionTokens(Number(data.session.total_tokens || 0));
       })
       .catch(() => {});
   };
@@ -137,6 +139,7 @@ export default function ProjectPage() {
         sessionId,
         balanceUsdc: sessionBalance,
         status: "closed",
+        totalTokens: sessionTokens,
       }),
     })
       .then(() => {
@@ -188,7 +191,7 @@ export default function ProjectPage() {
         }
         setMessages(data.messages || []);
         setGenerationCount(data.generationCount || 0);
-        setTotalTokens(data.totals?.tokens || 0);
+        setProjectTokens(data.totals?.tokens || 0);
       })
       .catch(() => {});
   };
@@ -318,7 +321,20 @@ export default function ProjectPage() {
         }).catch(() => {});
       }
       if (tokens?.total) {
-        setTotalTokens((prev) => prev + tokens.total);
+        setProjectTokens((prev) => prev + tokens.total);
+        setSessionTokens((prev) => prev + tokens.total);
+        if (sessionId) {
+          fetch("/api/db/sessions", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId,
+              balanceUsdc: nextBalance,
+              status: "open",
+              totalTokens: sessionTokens + tokens.total,
+            }),
+          }).catch(() => {});
+        }
       }
       setPreviewMode("preview");
 
@@ -456,7 +472,7 @@ export default function ProjectPage() {
         setPreviewHtml(data.project?.latest_html || "");
         setMessages(data.messages || []);
         setGenerationCount(data.generationCount || 0);
-        setTotalTokens(data.totals?.tokens || 0);
+        setProjectTokens(data.totals?.tokens || 0);
       })
       .catch(() => {});
 
@@ -474,6 +490,7 @@ export default function ProjectPage() {
         setSessionId(data.session.id);
         setSessionBalance(Number(data.session.balance_usdc || 0));
         setSessionActive(data.session.status === "open");
+        setSessionTokens(Number(data.session.total_tokens || 0));
       })
       .catch(() => {});
   }, [walletConnected, walletAddress, urlProjectId, router]);
@@ -489,7 +506,7 @@ export default function ProjectPage() {
         sessionBalance={sessionBalance}
         onStartSession={handleStartSession}
         onEndSession={handleEndSession}
-        totalTokens={totalTokens}
+        sessionTokens={sessionTokens}
       />
 
       <div className="flex flex-1 overflow-hidden">
