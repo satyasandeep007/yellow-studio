@@ -45,16 +45,21 @@ export const connectToYellow = () => {
 
 // Set up message signer for your wallet
 export const setupMessageSigner = async () => {
-  if (!window.ethereum) {
+  const ethereum = window.ethereum;
+  if (!ethereum) {
     throw new Error("Please install MetaMask");
   }
 
   // Request wallet connection
-  const accounts = await window.ethereum.request({
+  const accounts = await ethereum.request({
     method: "eth_requestAccounts",
   });
 
-  const userAddress = accounts[0];
+  const accountList = Array.isArray(accounts) ? (accounts as string[]) : [];
+  const userAddress = accountList[0];
+  if (!userAddress) {
+    throw new Error("No accounts returned from MetaMask");
+  }
 
   // Create message signer function.
   // personal_sign requires a string; nitrolite passes payload = [requestId, method, params, timestamp].
@@ -65,7 +70,7 @@ export const setupMessageSigner = async () => {
         : JSON.stringify(payload, (_, v) =>
             typeof v === "bigint" ? v.toString() : v,
           );
-    return await window.ethereum.request({
+    return await ethereum.request({
       method: "personal_sign",
       params: [message, userAddress],
     });
@@ -76,8 +81,8 @@ export const setupMessageSigner = async () => {
 };
 
 export const createPaymentSession = async (
-  messageSigner: any,
-  userAddress: any,
+  messageSigner: (payload: unknown) => Promise<unknown>,
+  userAddress: string,
 ) => {
   console.log("messageSigner: ", messageSigner, "userAddress: ", userAddress);
   const partnerAddress = "0x7EE860cDCc157998EaEF68f6B5387DE77fe3D02F";
@@ -98,9 +103,13 @@ export const createPaymentSession = async (
   ];
 
   // Create signed session message
-  const sessionMessage = await createAppSessionMessage(messageSigner, [
-    { definition: appDefinition, allocations },
-  ]);
+  const sessionMessage = await createAppSessionMessage(
+    messageSigner as any,
+    {
+      definition: appDefinition as any,
+      allocations: allocations as any,
+    } as any,
+  );
 
   // Send to ClearNode
 
@@ -110,7 +119,11 @@ export const createPaymentSession = async (
   return { appDefinition, allocations };
 };
 
-export const sendPayment = async (messageSigner, amount, userAddress) => {
+export const sendPayment = async (
+  messageSigner: (payload: unknown) => Promise<unknown>,
+  amount: number | string,
+  userAddress: string,
+) => {
   const recipient = "0x7EE860cDCc157998EaEF68f6B5387DE77fe3D02F";
   // Create payment message
   const paymentData = {
