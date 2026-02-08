@@ -10,7 +10,7 @@ import { useGeneration } from "@/lib/hooks/useGeneration";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { useWalletSession } from "@/lib/hooks/useWalletSession";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function ProjectPage() {
   const params = useParams<{ projectId: string }>();
@@ -24,6 +24,8 @@ export default function ProjectPage() {
   const [selectedModel, setSelectedModel] = useState<
     "gpt-4" | "gpt-3.5-turbo" | "gpt-4o"
   >("gpt-4");
+
+  const resetRef = useRef<null | (() => void)>(null);
 
   const {
     hasProvider,
@@ -43,7 +45,10 @@ export default function ProjectPage() {
     handleStartSession,
     handleEndSession,
     setWalletModalOpen,
-  } = useWalletSession();
+  } = useWalletSession({
+    onDisconnect: () => resetRef.current?.(),
+    onWalletChange: () => resetRef.current?.(),
+  });
 
   const {
     projects,
@@ -60,11 +65,16 @@ export default function ProjectPage() {
     handleNewProject,
     handleSelectProject,
     resetProjectState,
+    resetAll,
   } = useProjects({
     walletConnected,
     walletAddress,
     urlProjectId,
   });
+
+  useEffect(() => {
+    resetRef.current = resetAll;
+  }, [resetAll]);
 
   const canGenerate = walletConnected && sessionActive;
 
