@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchSessions, updateSession, upsertSession } from "@/lib/projectApi";
-import { createPaymentSession, setupMessageSigner } from "@/yellow/yellow";
+import {
+  createPaymentSession,
+  sendPayment,
+  setupMessageSigner,
+} from "@/yellow/yellow";
 
 type EthereumProvider = {
   isMetaMask?: boolean;
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
   on?: (event: string, handler: (...args: unknown[]) => void) => void;
-  removeListener?: (event: string, handler: (...args: unknown[]) => void) => void;
+  removeListener?: (
+    event: string,
+    handler: (...args: unknown[]) => void,
+  ) => void;
 };
 
 export const useWalletSession = (options?: {
@@ -47,7 +54,9 @@ export const useWalletSession = (options?: {
   const handleConnectMetaMask = async () => {
     const provider = ethereum;
     if (!provider) {
-      setWalletError("MetaMask not detected. Install the extension to connect.");
+      setWalletError(
+        "MetaMask not detected. Install the extension to connect.",
+      );
       return;
     }
     try {
@@ -78,13 +87,11 @@ export const useWalletSession = (options?: {
   const handleStartSession = () => {
     if (!walletConnected) return;
 
-    console.log('starting session...');
+    console.log("starting session...");
     setupMessageSigner().then(({ userAddress, messageSigner }) => {
-      console.log('messageSigner', userAddress);
+      console.log("messageSigner", userAddress);
       createPaymentSession(messageSigner, userAddress);
-      
     });
-
 
     upsertSession(walletAddress, 9.8)
       .then((data) => {
@@ -97,12 +104,16 @@ export const useWalletSession = (options?: {
       .catch(() => {});
   };
 
-  const handleEndSession = () => {
+  const handleEndSession = async () => {
     if (!sessionId) {
       setSessionActive(false);
       setSessionTokens(0);
       return;
     }
+
+    const { userAddress, messageSigner } = await setupMessageSigner();
+    await sendPayment(messageSigner, 0.08, userAddress);
+
     updateSession({
       sessionId,
       balanceUsdc: sessionBalance,
@@ -159,7 +170,9 @@ export const useWalletSession = (options?: {
           setSessionActive(false);
           return;
         }
-        const openSession = sessions.find((session) => session.status === "open");
+        const openSession = sessions.find(
+          (session) => session.status === "open",
+        );
         const latest = openSession ?? sessions[0];
         setSessionId(latest.id);
         setSessionBalance(Number(latest.balance_usdc || 0));

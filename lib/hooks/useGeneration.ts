@@ -7,6 +7,7 @@ import {
   updateSession,
 } from "@/lib/projectApi";
 import { streamGeneration } from "@/lib/streamGeneration";
+import { sendPayment, setupMessageSigner } from "@/yellow/yellow";
 
 type Message = {
   id: string;
@@ -108,6 +109,9 @@ export const useGeneration = (params: GenerationParams) => {
         },
         setPreviewHtml
       );
+
+
+    
 
       setGenerationCount(nextCount);
       setLastUpdatedLabel("Updated just now");
