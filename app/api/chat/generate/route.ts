@@ -7,7 +7,7 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
    try {
-      const { prompt, model, messages, currentCode } = await request.json();
+      const { prompt, model, messages, currentCode, stream } = await request.json();
 
       if (!prompt) {
          return NextResponse.json(
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
          );
       }
 
-      const systemPrompt = `You are an expert web developer. Generate complete, production-ready HTML code based on the user's request and prior context.
+      const systemPrompt = `You are an expert web developer. Generate complete, production-ready HTML based on the user's request and prior context.
 
 CRITICAL RULES:
 1. Generate ONLY the HTML code - no explanations, no markdown, no code fences
@@ -43,30 +43,94 @@ Return ONLY the HTML code starting with <!DOCTYPE html> and ending with </html>.
       const history = Array.isArray(messages)
          ? messages
               .filter((message) => message?.role && message?.content)
-              .slice(-12)
+              .slice(-8)
               .map((message) => ({
                  role: message.role,
                  content: message.content,
               }))
          : [];
 
+      const compactCode = currentCode
+         ? String(currentCode)
+              .replace(/\s+/g, " ")
+              .slice(0, 20000)
+         : "";
+
+      const requestMessages = [
+         { role: "system", content: systemPrompt },
+         ...(compactCode
+            ? [
+                 {
+                    role: "system",
+                    content: `Current HTML code to update:\n${compactCode}`,
+                 },
+              ]
+            : []),
+         ...history,
+         { role: "user", content: prompt },
+      ];
+
+      if (stream) {
+         const streamResponse = await openai.chat.completions.create({
+            model: modelName,
+            messages: requestMessages,
+            temperature: 0.5,
+            max_tokens: 3000,
+            stream: true,
+            stream_options: { include_usage: true },
+         });
+
+         const encoder = new TextEncoder();
+         const readableStream = new ReadableStream({
+            async start(controller) {
+               try {
+                  for await (const chunk of streamResponse) {
+                     const delta = chunk.choices?.[0]?.delta?.content;
+                     if (delta) {
+                        controller.enqueue(
+                           encoder.encode(
+                              `data: ${JSON.stringify({ type: "delta", content: delta })}\n\n`
+                           )
+                        );
+                     }
+                     if (chunk.usage) {
+                        controller.enqueue(
+                           encoder.encode(
+                              `data: ${JSON.stringify({ type: "usage", usage: chunk.usage })}\n\n`
+                           )
+                        );
+                     }
+                  }
+                  controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+                  controller.close();
+               } catch (error) {
+                  const message =
+                     error instanceof Error ? error.message : "Stream error";
+                  controller.enqueue(
+                     encoder.encode(
+                        `data: ${JSON.stringify({ type: "error", message })}\n\n`
+                     )
+                  );
+                  controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+                  controller.close();
+               }
+            },
+         });
+
+         return new Response(readableStream, {
+            headers: {
+               "Content-Type": "text/event-stream",
+               "Cache-Control": "no-cache, no-transform",
+               Connection: "keep-alive",
+            },
+         });
+      }
+
       const completion = await openai.chat.completions.create({
          model: modelName,
-         messages: [
-            { role: "system", content: systemPrompt },
-            ...(currentCode
-               ? [
-                    {
-                       role: "system",
-                       content: `Current HTML code to update:\n${currentCode}`,
-                    },
-                 ]
-               : []),
-            ...history,
-            { role: "user", content: prompt },
-         ],
+         messages: requestMessages,
          temperature: 0.6,
-         max_tokens: 4000,
+         max_tokens: 3000,
       });
 
       const generatedCode = completion.choices[0]?.message?.content || "";

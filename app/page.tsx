@@ -130,7 +130,7 @@ export default function Home() {
     const sanitizedPrompt = prompt.trim();
     const historyForApi = messages
       .filter((message) => message.role !== "system")
-      .slice(-10)
+      .slice(-6)
       .map((message) => ({
         role: message.role,
         content: message.content,
@@ -161,6 +161,7 @@ export default function Home() {
           model: selectedModel,
           messages: historyForApi,
           currentCode: previewHtml || "",
+          stream: true,
         }),
       });
 
@@ -168,17 +169,66 @@ export default function Home() {
         throw new Error(`API error: ${response.status}`);
       }
 
-      const data = await response.json();
-      const generatedCode = data.code;
-      const tokens = data.tokens;
+      const contentType = response.headers.get("content-type") || "";
+      let generatedCode = "";
+      let tokens: { total?: number } | undefined;
 
-      // Update total tokens
+      if (contentType.includes("text/event-stream") && response.body) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let streamDone = false;
+
+        while (!streamDone) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split("\n\n");
+          buffer = parts.pop() ?? "";
+
+          for (const part of parts) {
+            const line = part.trim();
+            if (!line.startsWith("data:")) continue;
+            const data = line.replace(/^data:\s*/, "");
+            if (data === "[DONE]") {
+              streamDone = true;
+              break;
+            }
+            try {
+              const payload = JSON.parse(data) as {
+                type?: string;
+                content?: string;
+                usage?: { total_tokens?: number };
+                message?: string;
+              };
+              if (payload.type === "delta" && payload.content) {
+                generatedCode += payload.content;
+                setPreviewHtml(generatedCode);
+              } else if (payload.type === "usage") {
+                tokens = { total: payload.usage?.total_tokens ?? 0 };
+              } else if (payload.type === "error") {
+                throw new Error(payload.message || "Stream error");
+              }
+            } catch (error) {
+              throw error;
+            }
+          }
+        }
+      } else {
+        const data = await response.json();
+        generatedCode = data.code;
+        tokens = data.tokens;
+        setPreviewHtml(generatedCode);
+      }
+
+      if (!generatedCode) {
+        throw new Error("No code returned from the model.");
+      }
+
       if (tokens?.total) {
         setTotalTokens((prev) => prev + tokens.total);
       }
 
-      // Update preview with generated code
-      setPreviewHtml(generatedCode);
       setGenerationCount(nextCount);
       setLastUpdatedLabel("Updated just now");
       setSessionBalance((prev) => Math.max(0, Number((prev - 0.08).toFixed(2))));
