@@ -1,4 +1,8 @@
-export function PreviewPanel() {
+type PreviewPanelProps = {
+  html: string;
+};
+
+export function PreviewPanel({ html }: PreviewPanelProps) {
   return (
     <div className="flex h-full flex-col rounded-3xl border border-white/10 bg-[linear-gradient(160deg,rgba(12,15,20,0.95),rgba(10,12,16,0.95))] p-6 shadow-[0_0_100px_rgba(57,255,136,0.12)]">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -21,22 +25,41 @@ export function PreviewPanel() {
         </div>
       </div>
 
-      <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/5 p-6 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-white/10 bg-black/50 text-2xl">
-          ▢
+      <div className="mt-6 flex flex-1 flex-col overflow-hidden rounded-2xl border border-dashed border-white/15 bg-white/5">
+        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 text-xs uppercase tracking-[0.2em] text-white/40">
+          <span>Render Canvas</span>
+          <span className="text-[10px] text-white/30">preview.html</span>
         </div>
-        <h3 className="mt-4 text-lg font-semibold">Preview will render here</h3>
-        <p className="mt-2 max-w-md text-sm text-white/60">
-          Chainva streams generated HTML/CSS/React into this canvas and updates
-          instantly after each generation.
-        </p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs text-white/50">
-          <span className="rounded-full border border-white/10 bg-black/40 px-3 py-2">
-            Version v0.3
-          </span>
-          <span className="rounded-full border border-white/10 bg-black/40 px-3 py-2">
-            Last update 6s ago
-          </span>
+        <div className="flex flex-1">
+          {html ? (
+            <iframe
+              className="h-full w-full bg-white"
+              title="Chainva Preview"
+              sandbox="allow-scripts allow-forms allow-same-origin"
+              srcDoc={html}
+            />
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-white/10 bg-black/50 text-2xl">
+                ▢
+              </div>
+              <h3 className="mt-4 text-lg font-semibold">
+                Preview will render here
+              </h3>
+              <p className="mt-2 max-w-md text-sm text-white/60">
+                Chainva streams generated HTML/CSS/React into this canvas and
+                updates instantly after each generation.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs text-white/50">
+                <span className="rounded-full border border-white/10 bg-black/40 px-3 py-2">
+                  Version v0.3
+                </span>
+                <span className="rounded-full border border-white/10 bg-black/40 px-3 py-2">
+                  Last update 6s ago
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

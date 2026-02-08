@@ -1,4 +1,9 @@
-export function ChatPanel() {
+type ChatPanelProps = {
+  prompt: string;
+  onPromptChange: (value: string) => void;
+};
+
+export function ChatPanel({ prompt, onPromptChange }: ChatPanelProps) {
   return (
     <div className="flex h-full flex-col rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(15,20,26,0.95),rgba(9,12,16,0.95))] p-6 shadow-[0_0_80px_rgba(0,184,255,0.08)]">
       <div className="flex items-center justify-between">
@@ -54,9 +59,12 @@ export function ChatPanel() {
             Shift + Enter for newline
           </span>
         </div>
-        <div className="mt-3 min-h-[88px] rounded-xl border border-white/10 bg-black/40 p-3 text-sm text-white/70">
-          Describe the vibe, colors, and sections you want to generate...
-        </div>
+        <textarea
+          className="mt-3 min-h-[88px] w-full resize-none rounded-xl border border-white/10 bg-black/40 p-3 text-sm text-white/80 outline-none placeholder:text-white/40"
+          placeholder="Describe the vibe, colors, and sections you want to generate..."
+          value={prompt}
+          onChange={(event) => onPromptChange(event.target.value)}
+        />
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-white/40">
             <span className="inline-flex h-2 w-2 rounded-full bg-emerald-300"></span>
