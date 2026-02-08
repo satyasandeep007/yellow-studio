@@ -128,6 +128,13 @@ export default function Home() {
     if (!canGenerate || !prompt.trim()) return;
     setIsGenerating(true);
     const sanitizedPrompt = prompt.trim();
+    const historyForApi = messages
+      .filter((message) => message.role !== "system")
+      .slice(-10)
+      .map((message) => ({
+        role: message.role,
+        content: message.content,
+      }));
 
     // Add user message immediately
     const nextCount = generationCount + 1;
@@ -152,6 +159,8 @@ export default function Home() {
         body: JSON.stringify({
           prompt: sanitizedPrompt,
           model: selectedModel,
+          messages: historyForApi,
+          currentCode: previewHtml || "",
         }),
       });
 
@@ -180,7 +189,9 @@ export default function Home() {
         {
           id: `assistant-${Date.now()}`,
           role: "assistant",
-          content: `Generated your ${sanitizedPrompt.toLowerCase()}. Check the preview panel to see the result!`,
+          content: previewHtml
+            ? "Applied your latest change to the existing page. Check the preview to confirm the update."
+            : `Generated your ${sanitizedPrompt.toLowerCase()}. Check the preview panel to see the result!`,
           meta: `Generation #${nextCount} • 0.08 USDC`,
           tokens: tokens?.total || 0,
         },

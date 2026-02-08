@@ -7,7 +7,7 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
    try {
-      const { prompt, model } = await request.json();
+      const { prompt, model, messages, currentCode } = await request.json();
 
       if (!prompt) {
          return NextResponse.json(
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
          );
       }
 
-      const systemPrompt = `You are an expert web developer. Generate complete, production-ready HTML code based on the user's request. 
+      const systemPrompt = `You are an expert web developer. Generate complete, production-ready HTML code based on the user's request and prior context.
 
 CRITICAL RULES:
 1. Generate ONLY the HTML code - no explanations, no markdown, no code fences
@@ -27,6 +27,8 @@ CRITICAL RULES:
 6. Include all necessary meta tags and viewport settings
 7. Use semantic HTML5 elements
 8. Make it visually appealing with good color schemes and spacing
+9. If existing HTML is provided, MODIFY it to apply the user's latest request while preserving the rest of the design
+10. If the user asks for changes, apply only those changes and keep all other sections intact
 
 Return ONLY the HTML code starting with <!DOCTYPE html> and ending with </html>. Nothing else.`;
 
@@ -38,13 +40,32 @@ Return ONLY the HTML code starting with <!DOCTYPE html> and ending with </html>.
          modelName = "gpt-4o";
       }
 
+      const history = Array.isArray(messages)
+         ? messages
+              .filter((message) => message?.role && message?.content)
+              .slice(-12)
+              .map((message) => ({
+                 role: message.role,
+                 content: message.content,
+              }))
+         : [];
+
       const completion = await openai.chat.completions.create({
          model: modelName,
          messages: [
             { role: "system", content: systemPrompt },
+            ...(currentCode
+               ? [
+                    {
+                       role: "system",
+                       content: `Current HTML code to update:\n${currentCode}`,
+                    },
+                 ]
+               : []),
+            ...history,
             { role: "user", content: prompt },
          ],
-         temperature: 0.7,
+         temperature: 0.6,
          max_tokens: 4000,
       });
 
