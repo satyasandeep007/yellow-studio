@@ -21,18 +21,8 @@
 
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(
-      1000px 700px at 12% -10%,
-      rgba(57, 255, 136, 0.14),
-      transparent 55%
-    ),
-    radial-gradient(
-      900px 600px at 90% 0%,
-      rgba(0, 184, 255, 0.16),
-      transparent 50%
-    ),
-    linear-gradient(180deg, var(--bg-0) 0%, #0a0c0f 100%);
+  background: #0a0e14;
   color: var(--text-main);
   font-family: var(--font-sans), system-ui, sans-serif;
+  overflow: hidden;
 }

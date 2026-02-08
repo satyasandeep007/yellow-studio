@@ -256,19 +256,23 @@ export default function Home() {
   }, [ethereum]);
 
   return (
-    <div className="min-h-screen px-6 py-6 text-white">
-      <main className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-[1440px] flex-col gap-6">
-        <BuilderHeader
-          walletConnected={walletConnected}
-          walletAddress={walletAddress}
-          onConnectWallet={handleConnectWallet}
-          onDisconnectWallet={handleDisconnectWallet}
-          sessionActive={sessionActive}
-          sessionBalance={sessionBalance}
-          onStartSession={handleStartSession}
-          onEndSession={handleEndSession}
-        />
-        <section className="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-[1.05fr_1.25fr]">
+    <div className="flex h-screen flex-col bg-[#0a0e14] text-white">
+      {/* Header */}
+      <BuilderHeader
+        walletConnected={walletConnected}
+        walletAddress={walletAddress}
+        onConnectWallet={handleConnectWallet}
+        onDisconnectWallet={handleDisconnectWallet}
+        sessionActive={sessionActive}
+        sessionBalance={sessionBalance}
+        onStartSession={handleStartSession}
+        onEndSession={handleEndSession}
+      />
+
+      {/* Main Content: Split View */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left: Chat Panel */}
+        <div className="w-1/2 border-r border-gray-800">
           <ChatPanel
             prompt={prompt}
             onPromptChange={setPrompt}
@@ -277,13 +281,19 @@ export default function Home() {
             canGenerate={canGenerate}
             messages={messages}
           />
+        </div>
+
+        {/* Right: Preview Panel */}
+        <div className="w-1/2">
           <PreviewPanel
             html={previewHtml}
-            versionLabel={`Version v${generationCount + 1}`}
+            versionLabel={`v${generationCount + 1}`}
             lastUpdated={lastUpdatedLabel}
           />
-        </section>
-      </main>
+        </div>
+      </div>
+
+      {/* Wallet Modal */}
       <WalletModal
         open={walletModalOpen}
         onClose={() => setWalletModalOpen(false)}

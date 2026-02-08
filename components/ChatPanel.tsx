@@ -21,89 +21,113 @@ export function ChatPanel({
   messages,
 }: ChatPanelProps) {
   return (
-    <div className="flex h-full flex-col rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(15,20,26,0.95),rgba(9,12,16,0.95))] p-6 shadow-[0_0_80px_rgba(0,184,255,0.08)]">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.24em] text-white/40">
-            Builder Chat
-          </p>
-          <h2 className="text-lg font-semibold">Prompt-to-Site Studio</h2>
-        </div>
-        <span className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-emerald-200">
-          Live
-        </span>
-      </div>
-
-      <div className="mt-6 flex flex-1 flex-col gap-4 overflow-hidden">
-        {messages.map((message) => {
-          const isUser = message.role === "user";
-          const isAssistant = message.role === "assistant";
-          return (
-            <div
-              key={message.id}
-              className={`rounded-2xl border p-4 ${
-                isUser
-                  ? "ml-auto max-w-[80%] border-emerald-400/30 bg-emerald-400/10"
-                  : "border-white/10 bg-white/5"
-              }`}
-            >
-              <p
-                className={`text-xs uppercase tracking-[0.2em] ${
-                  isUser
-                    ? "text-emerald-200/80"
-                    : isAssistant
-                      ? "text-white/60"
-                      : "text-white/40"
-                }`}
-              >
-                {isUser ? "You" : isAssistant ? "Chainva AI" : "System"}
-              </p>
-              <p className="mt-2 text-sm text-white/85">{message.content}</p>
-              {message.meta ? (
-                <div className="mt-3 flex items-center gap-2 text-xs text-white/50">
-                  <span className="inline-flex h-2 w-2 rounded-full bg-emerald-300"></span>
-                  {message.meta}
-                </div>
-              ) : null}
+    <div className="flex h-full flex-col bg-[#0f1419]">
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="mx-auto w-full max-w-3xl space-y-6">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500">
+                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-semibold text-white">Start Building</h2>
+              <p className="mt-2 text-sm text-gray-400">Describe your website and watch it come to life</p>
             </div>
-          );
-        })}
+          ) : (
+            messages.map((message) => {
+              const isUser = message.role === "user";
+              return (
+                <div key={message.id} className="group flex gap-4">
+                  {/* Avatar */}
+                  <div className="flex-shrink-0">
+                    {isUser ? (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500">
+                        <span className="text-xs font-semibold text-white">U</span>
+                      </div>
+                    ) : (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
+                        <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  {/* Message Content */}
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-white">
+                        {isUser ? "You" : "Chainva AI"}
+                      </span>
+                      {message.meta && (
+                        <span className="text-xs text-gray-500">{message.meta}</span>
+                      )}
+                    </div>
+                    <div className="prose prose-invert max-w-none text-sm text-gray-300">
+                      {message.content}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-white/10 bg-black/40 p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-xs uppercase tracking-[0.24em] text-white/40">
-            New Prompt
-          </p>
-          <span className="text-xs text-white/40">
-            Shift + Enter for newline
-          </span>
-        </div>
-        <textarea
-          className="mt-3 min-h-[88px] w-full resize-none rounded-xl border border-white/10 bg-black/40 p-3 text-sm text-white/80 outline-none placeholder:text-white/40"
-          placeholder="Describe the vibe, colors, and sections you want to generate..."
-          value={prompt}
-          onChange={(event) => onPromptChange(event.target.value)}
-        />
-        <div className="mt-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-white/40">
-            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-300"></span>
-            Ready to generate
+      {/* Input Area */}
+      <div className="border-t border-gray-800 bg-[#0f1419] px-4 py-4">
+        <div className="mx-auto w-full max-w-3xl">
+          {!canGenerate && (
+            <div className="mb-3 flex items-center gap-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-400">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Start a Yellow session to begin generating
+            </div>
+          )}
+          <div className="relative flex items-end gap-2">
+            <textarea
+              className="min-h-[52px] flex-1 resize-none rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              placeholder="Describe your website... (e.g., 'Create a neon event landing page with countdown')"
+              value={prompt}
+              onChange={(e) => onPromptChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (prompt.trim() && !isGenerating && canGenerate) {
+                    onGenerate();
+                  }
+                }
+              }}
+              rows={1}
+            />
+            <button
+              className="flex h-[52px] items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 px-5 font-medium text-white transition hover:from-purple-600 hover:to-pink-600 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={onGenerate}
+              disabled={!prompt.trim() || isGenerating || !canGenerate}
+            >
+              {isGenerating ? (
+                <>
+                  <svg className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Generate
+                </>
+              )}
+            </button>
           </div>
-          <div className="flex items-center gap-3 text-xs text-white/40">
-            {!canGenerate ? (
-              <span className="rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-amber-200">
-                Start a session to generate
-              </span>
-            ) : null}
+          <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+            <span>Press Enter to send, Shift + Enter for new line</span>
+            {canGenerate && <span className="text-purple-400">Cost: 0.08 USDC per generation</span>}
           </div>
-          <button
-            className="rounded-full bg-emerald-400 px-5 py-2 text-sm font-semibold text-black transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={onGenerate}
-            disabled={!prompt.trim() || isGenerating || !canGenerate}
-          >
-            {isGenerating ? "Generating..." : "Generate (0.08 USDC)"}
-          </button>
         </div>
       </div>
     </div>

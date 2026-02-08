@@ -24,29 +24,43 @@ export function BuilderHeader({
     : "Session: Not started";
 
   return (
-    <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/15 bg-black/60 px-6 py-4 backdrop-blur shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
-      <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-lg font-semibold">
-          CA
+    <header className="flex items-center justify-between border-b border-gray-800 bg-[#0a0e14] px-6 py-3">
+      {/* Left: Logo & Project Name */}
+      <div className="flex items-center gap-4">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-pink-500">
+          <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
         </div>
         <div>
-          <p className="text-sm uppercase tracking-[0.3em] text-white/40">
-            Chainva AI
-          </p>
-          <h1 className="text-xl font-semibold">Neon Event Builder</h1>
+          <h1 className="text-sm font-semibold text-white">Chainva AI</h1>
+          <p className="text-xs text-gray-500">AI Website Builder</p>
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 rounded-full border border-white/20 bg-black/70 px-4 py-2 text-xs uppercase tracking-[0.2em] text-white/70">
-          {sessionLabel}
-        </div>
+
+      {/* Right: Session & Wallet Controls */}
+      <div className="flex items-center gap-3">
+        {/* Session Status */}
+        {sessionActive ? (
+          <div className="flex items-center gap-2 rounded-lg bg-green-500/10 px-3 py-1.5 text-sm">
+            <div className="h-2 w-2 animate-pulse rounded-full bg-green-500"></div>
+            <span className="font-medium text-green-400">{sessionBalance.toFixed(2)} USDC</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 rounded-lg bg-gray-800 px-3 py-1.5 text-sm text-gray-400">
+            <div className="h-2 w-2 rounded-full bg-gray-600"></div>
+            <span>No Session</span>
+          </div>
+        )}
+
+        {/* Wallet Connection */}
         {walletConnected ? (
           <div className="flex items-center gap-2">
-            <span className="rounded-full border border-white/20 bg-black/70 px-4 py-2 text-xs uppercase tracking-[0.2em] text-white/80">
+            <div className="rounded-lg bg-gray-800 px-3 py-1.5 text-sm font-mono text-gray-300">
               {walletAddress}
-            </span>
+            </div>
             <button
-              className="rounded-full border border-white/20 bg-black/70 px-4 py-2 text-xs font-semibold text-white/80 transition hover:border-white/50 hover:text-white"
+              className="rounded-lg bg-gray-800 px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700"
               onClick={onDisconnectWallet}
             >
               Disconnect
@@ -54,29 +68,33 @@ export function BuilderHeader({
           </div>
         ) : (
           <button
-            className="rounded-full border border-white/20 bg-black/70 px-5 py-2 text-sm font-semibold text-white/85 transition hover:border-white/50 hover:text-white"
+            className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
             onClick={onConnectWallet}
           >
             Connect Wallet
           </button>
         )}
+
+        {/* Session Control */}
         {sessionActive ? (
           <button
-            className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-5 py-2 text-sm font-semibold text-emerald-200 transition hover:border-emerald-300 hover:text-emerald-100"
+            className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-700"
             onClick={onEndSession}
           >
             End Session
           </button>
         ) : (
           <button
-            className="rounded-full bg-emerald-400 px-5 py-2 text-sm font-semibold text-black transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-1.5 text-sm font-medium text-white hover:from-purple-600 hover:to-pink-600 disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onStartSession}
             disabled={!walletConnected}
           >
             Start Session
           </button>
         )}
-        <button className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-black transition hover:bg-white/90">
+
+        {/* Publish Button */}
+        <button className="rounded-lg bg-white px-4 py-1.5 text-sm font-medium text-black hover:bg-gray-200">
           Publish
         </button>
       </div>
