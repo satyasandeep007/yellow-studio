@@ -1,4 +1,4 @@
-# Yellow Studio (Chainva AI)
+# Yellow Studio
 
 Chat‑driven AI website builder with live preview, project persistence, and session‑based token/billing tracking. Built for hackathon demo flow.
 
