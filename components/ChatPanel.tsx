@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 type ChatPanelProps = {
   prompt: string;
@@ -11,9 +11,10 @@ type ChatPanelProps = {
     role: "system" | "user" | "assistant";
     content: string;
     meta?: string;
+    tokens?: number;
   }[];
-  selectedModel: "gpt-4" | "claude-3";
-  onModelChange: (model: "gpt-4" | "claude-3") => void;
+  selectedModel: "gpt-4" | "gpt-3.5-turbo" | "gpt-4o";
+  onModelChange: (model: "gpt-4" | "gpt-3.5-turbo" | "gpt-4o") => void;
 };
 
 const SUGGESTED_PROMPTS = [
@@ -33,6 +34,36 @@ export function ChatPanel({
   selectedModel,
   onModelChange,
 }: ChatPanelProps) {
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const getModelDisplayName = (model: string) => {
+    switch (model) {
+      case "gpt-4":
+        return "GPT-4 Turbo";
+      case "gpt-3.5-turbo":
+        return "GPT-3.5 Turbo";
+      case "gpt-4o":
+        return "GPT-4o";
+      default:
+        return "GPT-4 Turbo";
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowModelDropdown(false);
+      }
+    };
+
+    if (showModelDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showModelDropdown]);
+
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Messages Area */}
@@ -91,6 +122,14 @@ export function ChatPanel({
                       </span>
                       {message.meta && (
                         <span className="text-xs text-gray-500">{message.meta}</span>
+                      )}
+                      {message.tokens && (
+                        <span className="flex items-center gap-1 text-xs text-purple-600">
+                          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                          {message.tokens.toLocaleString()} tokens
+                        </span>
                       )}
                     </div>
                     <div className="max-w-none text-sm text-gray-700 leading-relaxed">
@@ -155,18 +194,44 @@ export function ChatPanel({
           </div>
           <div className="mt-3 flex items-center justify-between">
             {/* Model Selector */}
-            <div className="flex items-center gap-2">
-              <button className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 transition">
+            <div className="flex items-center gap-2 relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowModelDropdown(!showModelDropdown)}
+                className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 transition"
+              >
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <span className="font-medium">
-                  {selectedModel === "gpt-4" ? "GPT-4 Turbo" : "Claude 3.5 Sonnet"}
-                </span>
+                <span className="font-medium">{getModelDisplayName(selectedModel)}</span>
                 <svg className="h-3 w-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
+
+              {/* Dropdown */}
+              {showModelDropdown && (
+                <div className="absolute bottom-full left-0 mb-2 w-48 rounded-lg border border-gray-200 bg-white shadow-lg z-10">
+                  {(["gpt-4", "gpt-3.5-turbo", "gpt-4o"] as const).map((model) => (
+                    <button
+                      key={model}
+                      onClick={() => {
+                        onModelChange(model);
+                        setShowModelDropdown(false);
+                      }}
+                      className={`w-full px-3 py-2 text-left text-xs hover:bg-gray-50 transition first:rounded-t-lg last:rounded-b-lg ${selectedModel === model ? "bg-purple-50 text-purple-600 font-medium" : "text-gray-700"
+                        }`}
+                    >
+                      {getModelDisplayName(model)}
+                      {selectedModel === model && (
+                        <svg className="inline-block ml-2 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <span className="text-xs text-gray-400">Press Enter to send</span>
             </div>
 
