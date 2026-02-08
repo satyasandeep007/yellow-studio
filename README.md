@@ -2,6 +2,9 @@
 
 # Yellow Studio
 
+![Home](public/submission/cover.svg)
+
+
 ## Description
 Yellow Studio is a chat‑driven AI website builder with live preview, project persistence, and session‑based token/billing tracking. Built for hackathon demo flow.
 
@@ -9,9 +12,13 @@ Yellow Studio is a chat‑driven AI website builder with live preview, project p
 
 ## Demo
 
+
+
 ### Home Page
 
-![Home](public/submission/cover.svg)
+
+![Home](public/submission/screenshots/PIC_4.png)
+
 
 ## Tech stack
 - Next.js 16 (App Router) + TypeScript
