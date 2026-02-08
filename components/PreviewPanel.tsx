@@ -1,8 +1,14 @@
 type PreviewPanelProps = {
   html: string;
+  versionLabel: string;
+  lastUpdated: string;
 };
 
-export function PreviewPanel({ html }: PreviewPanelProps) {
+export function PreviewPanel({
+  html,
+  versionLabel,
+  lastUpdated,
+}: PreviewPanelProps) {
   return (
     <div className="flex h-full flex-col rounded-3xl border border-white/10 bg-[linear-gradient(160deg,rgba(12,15,20,0.95),rgba(10,12,16,0.95))] p-6 shadow-[0_0_100px_rgba(57,255,136,0.12)]">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -50,17 +56,17 @@ export function PreviewPanel({ html }: PreviewPanelProps) {
                 Chainva streams generated HTML/CSS/React into this canvas and
                 updates instantly after each generation.
               </p>
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs text-white/50">
-                <span className="rounded-full border border-white/10 bg-black/40 px-3 py-2">
-                  Version v0.3
-                </span>
-                <span className="rounded-full border border-white/10 bg-black/40 px-3 py-2">
-                  Last update 6s ago
-                </span>
-              </div>
             </div>
           )}
         </div>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-white/50">
+        <span className="rounded-full border border-white/10 bg-black/40 px-3 py-2">
+          {versionLabel}
+        </span>
+        <span className="rounded-full border border-white/10 bg-black/40 px-3 py-2">
+          {lastUpdated}
+        </span>
       </div>
     </div>
   );
