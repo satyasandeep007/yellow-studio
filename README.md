@@ -1,6 +1,17 @@
+<br>
+
 # Yellow Studio
 
-Chat‑driven AI website builder with live preview, project persistence, and session‑based token/billing tracking. Built for hackathon demo flow.
+## Description
+Yellow Studio is a chat‑driven AI website builder with live preview, project persistence, and session‑based token/billing tracking. Built for hackathon demo flow.
+
+<br>
+
+## Demo
+
+### Home Page
+
+![Home](public/submission/cover.svg)
 
 ## Tech stack
 - Next.js 16 (App Router) + TypeScript
@@ -17,15 +28,6 @@ Chat‑driven AI website builder with live preview, project persistence, and ses
 - Yellow SDK stubs for state channels (Nitrolite sandbox)
 - Sessions list page
 
-## Project structure (key paths)
-- `app/user/projects/[projectId]/page.tsx` – main builder UI
-- `app/user/projects/page.tsx` – builder UI for new users
-- `app/user/sessions/page.tsx` – sessions list
-- `app/api/chat/generate/route.ts` – OpenAI generation (streaming)
-- `app/api/db/**` – Supabase persistence endpoints
-- `lib/hooks/*` – wallet/session, projects, generation hooks
-- `public/submission/*` – logo + cover assets
-- `yellow/yellow.ts` – Yellow SDK integration helpers
 
 ## Local setup
 1) Install deps
@@ -59,22 +61,63 @@ Open http://localhost:3000
 
 ## Yellow SDK (Nitrolite sandbox)
 - Integration helpers live in `yellow/yellow.ts`.
-- Current integration is a stub to be wired into session start/pay/settle flows.
-- Uses the Yellow sandbox websocket for testing.
+- Intended wiring points:
+  - Start Session → `connectToYellow()` + `setupMessageSigner()`
+  - Each generation → `sendPayment()`
+  - End Session → settle / close state channel (todo)
+- Uses Yellow sandbox websocket for testing (`wss://clearnet-sandbox.yellow.com/ws`).
+- Current implementation notes:
+  - `connectToYellow()` opens a websocket and logs raw messages from the sandbox ClearNode.
+  - `setupMessageSigner()` uses MetaMask `personal_sign` to sign state‑channel messages.
+  - `createPaymentSession()` prepares allocations and sends the signed session message to ClearNode.
+  - `sendPayment()` signs a lightweight payment payload and pushes it over the socket.
+- What still needs wiring:
+  - Persist the Yellow session id / channel metadata in `yellow_sessions`.
+  - On Start Session: call `createPaymentSession()` and save returned session info.
+  - On each generation: call `sendPayment()` and log tx to `transactions`.
+  - On End Session: call the settlement/close method once integrated.
 
 ## Build
 ```bash
 pnpm run build
 ```
 
-Note: Build uses webpack (`next build --webpack`) to avoid Turbopack port binding issues in restricted environments.
+<br>
 
-## Tips
-- If you see “no projects,” use **New Project** to create one.
-- Tokens in the header are session‑wide.
-- Project names won’t be overwritten once set (unless still “Untitled Project”).
+## Stakeholders
 
-## Assets
-- Logo: `public/submission/logo.svg`
-- Cover: `public/submission/cover.svg`
-- Favicon/App icon: `app/icon.svg`
+<div style="display: flex; justify-content: space-between; align-items: center;">
+   <p style="flex:1">Shiva Kumar: </p>
+   <div style="flex:4; justify-content: space-between;">
+      <a href="https://www.linkedin.com/in/shivamangina/" target="_blank">
+      <img src="https://img.shields.io/badge/linkedin-%2300acee.svg?color=405DE6&style=for-the-badge&logo=linkedin&logoColor=white" alt="linkedin" style="margin-bottom: 5px;" />
+      </a>
+      <a href="https://twitter.com/shivakmangina" target="_blank">
+      <img src="https://img.shields.io/badge/twitter-%2300acee.svg?color=1DA1F2&style=for-the-badge&logo=twitter&logoColor=white" alt="twitter" style="margin-bottom: 5px;" />
+      </a>
+      <a href="https://www.instagram.com/shiva_mangina" target="_blank">
+      <img src="https://img.shields.io/badge/instagram-%ff5851db.svg?color=C13584&style=for-the-badge&logo=instagram&logoColor=white" alt="instagram" style="margin-bottom: 5px;" />
+      </a>
+      <a href="https://github.com/shivamangina" target="_blank">
+      <img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="github" style="margin-bottom: 5px;" />
+      </a>
+   </div>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center;">
+   <p style="flex:1">Satya Sandeep: </p>
+   <div style="flex:4; justify-content: space-between;">
+      <a href="https://www.linkedin.com/in/satyasandeep" target="_blank">
+      <img src="https://img.shields.io/badge/linkedin-%2300acee.svg?color=405DE6&style=for-the-badge&logo=linkedin&logoColor=white" alt="linkedin" style="margin-bottom: 5px;" />
+      </a>
+      <a href="https://twitter.com/satyasandeep76" target="_blank">
+      <img src="https://img.shields.io/badge/twitter-%2300acee.svg?color=1DA1F2&style=for-the-badge&logo=twitter&logoColor=white" alt="twitter" style="margin-bottom: 5px;" />
+      </a>
+      <a href="https://www.instagram.com/satyasandeep007" target="_blank">
+      <img src="https://img.shields.io/badge/instagram-%ff5851db.svg?color=C13584&style=for-the-badge&logo=instagram&logoColor=white" alt="instagram" style="margin-bottom: 5px;" />
+      </a>
+      <a href="https://github.com/satyasandeep007" target="_blank">
+      <img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="github" style="margin-bottom: 5px;" />
+      </a>
+   </div>
+</div>
