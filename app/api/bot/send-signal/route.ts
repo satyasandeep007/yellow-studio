@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
-const MINI_APP_URL = process.env.NEXT_PUBLIC_MINI_APP_URL || 'http://localhost:3000';
+const MINI_APP_URL = process.env.NEXT_PUBLIC_MINI_APP_URL || 'https://signal-pay.vercel.app';
 
 export async function POST(request: NextRequest) {
    try {
@@ -40,6 +40,11 @@ Confidence: 🔒 <i>Locked</i>
       // Check if we're using HTTPS (production) or HTTP (local testing)
       const isProduction = MINI_APP_URL.startsWith('https://');
 
+      console.log('🔍 Debug Info:');
+      console.log('MINI_APP_URL:', MINI_APP_URL);
+      console.log('isProduction:', isProduction);
+      console.log('Signal ID:', signal.id);
+
       const keyboard = isProduction ? {
          // Production: Use web_app buttons (requires HTTPS)
          inline_keyboard: [
@@ -69,7 +74,7 @@ Confidence: 🔒 <i>Locked</i>
             ]
          ]
       } : {
-         // Local testing: Use callback buttons with URLs in message
+         // Local testing: Use callback buttons only (Telegram doesn't allow HTTP URLs in inline keyboards)
          inline_keyboard: [
             [
                {
@@ -98,6 +103,8 @@ Confidence: 🔒 <i>Locked</i>
          ]
       };
 
+      console.log('📤 Sending keyboard:', JSON.stringify(keyboard, null, 2));
+
       // Send message via Telegram Bot API
       const response = await fetch(
          `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
@@ -114,6 +121,8 @@ Confidence: 🔒 <i>Locked</i>
       );
 
       const data = await response.json();
+
+      console.log('📥 Telegram API Response:', JSON.stringify(data, null, 2));
 
       if (!data.ok) {
          let errorMessage = data.description || 'Telegram API error';
