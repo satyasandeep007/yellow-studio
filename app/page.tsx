@@ -25,6 +25,7 @@ export default function Home() {
   const [sessionBalance, setSessionBalance] = useState(0);
   const [generationCount, setGenerationCount] = useState(0);
   const [lastUpdatedLabel, setLastUpdatedLabel] = useState("Awaiting render");
+  const [previewMode, setPreviewMode] = useState<"code" | "preview">("code");
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
   const [messages, setMessages] = useState<Array<{
@@ -127,6 +128,7 @@ export default function Home() {
   const handleGenerate = async () => {
     if (!canGenerate || !prompt.trim()) return;
     setIsGenerating(true);
+    setPreviewMode("code");
     const sanitizedPrompt = prompt.trim();
     const historyForApi = messages
       .filter((message) => message.role !== "system")
@@ -232,6 +234,7 @@ export default function Home() {
       setGenerationCount(nextCount);
       setLastUpdatedLabel("Updated just now");
       setSessionBalance((prev) => Math.max(0, Number((prev - 0.08).toFixed(2))));
+      setPreviewMode("preview");
 
       // Add assistant message
       setMessages((prev) => [
@@ -332,6 +335,9 @@ export default function Home() {
             html={previewHtml}
             versionLabel={`v${generationCount + 1}`}
             lastUpdated={lastUpdatedLabel}
+            isStreaming={isGenerating}
+            viewMode={previewMode}
+            onViewModeChange={setPreviewMode}
           />
         </div>
       </div>

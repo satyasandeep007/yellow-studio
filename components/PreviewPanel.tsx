@@ -1,18 +1,20 @@
-import { useState } from "react";
-
 type PreviewPanelProps = {
   html: string;
   versionLabel: string;
   lastUpdated: string;
+  isStreaming: boolean;
+  viewMode: "code" | "preview";
+  onViewModeChange: (mode: "code" | "preview") => void;
 };
 
 export function PreviewPanel({
   html,
   versionLabel,
   lastUpdated,
+  isStreaming,
+  viewMode,
+  onViewModeChange,
 }: PreviewPanelProps) {
-  const [viewMode, setViewMode] = useState<"code" | "preview">("code");
-
   return (
     <div className="flex h-full flex-col bg-gray-50">
       {/* Preview Header */}
@@ -21,7 +23,7 @@ export function PreviewPanel({
           {/* View Mode Toggle */}
           <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1">
             <button
-              onClick={() => setViewMode("code")}
+              onClick={() => onViewModeChange("code")}
               className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${viewMode === "code"
                 ? "bg-white text-gray-900 shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
@@ -32,19 +34,21 @@ export function PreviewPanel({
               </svg>
               Code
             </button>
-            <button
-              onClick={() => setViewMode("preview")}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${viewMode === "preview"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
-                }`}
-            >
-              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              Preview
-            </button>
+            {!isStreaming && (
+              <button
+                onClick={() => onViewModeChange("preview")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${viewMode === "preview"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+                  }`}
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Preview
+              </button>
+            )}
           </div>
 
           {versionLabel && (
