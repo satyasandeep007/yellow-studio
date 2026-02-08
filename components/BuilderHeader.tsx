@@ -65,7 +65,9 @@ export function BuilderHeader({
         {walletConnected ? (
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-mono text-gray-700">
-              {walletAddress}
+              {walletAddress
+                ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+                : ""}
             </div>
             <button
               className="rounded-lg bg-gray-100 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-200"

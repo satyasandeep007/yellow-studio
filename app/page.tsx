@@ -23,6 +23,7 @@ export default function Home() {
   const [walletConnected, setWalletConnected] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
   const [sessionBalance, setSessionBalance] = useState(0);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [generationCount, setGenerationCount] = useState(0);
   const [lastUpdatedLabel, setLastUpdatedLabel] = useState("Awaiting render");
   const [previewMode, setPreviewMode] = useState<"code" | "preview">("code");
@@ -63,6 +64,7 @@ export default function Home() {
     setWalletConnected(false);
     setSessionActive(false);
     setSessionBalance(0);
+    setSessionId(null);
     setWalletAddress("");
     setProjects([]);
     setCurrentProjectId(null);
@@ -89,7 +91,7 @@ export default function Home() {
         setWalletError("No accounts returned from MetaMask.");
         return;
       }
-      setWalletAddress(shortenAddress(accounts[0]));
+      setWalletAddress(accounts[0]);
       setWalletConnected(true);
       setWalletModalOpen(false);
     } catch (error) {
@@ -102,19 +104,52 @@ export default function Home() {
   };
   const handleStartSession = () => {
     if (!walletConnected) return;
-    setSessionActive(true);
-    setSessionBalance(9.8);
+    fetch("/api/db/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ walletAddress, balanceUsdc: 9.8 }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.session) return;
+        setSessionId(data.session.id);
+        setSessionBalance(Number(data.session.balance_usdc || 0));
+        setSessionActive(true);
+      })
+      .catch(() => {});
   };
   const handleEndSession = () => {
-    setSessionActive(false);
+    if (!sessionId) {
+      setSessionActive(false);
+      return;
+    }
+    fetch("/api/db/sessions", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId,
+        balanceUsdc: sessionBalance,
+        status: "closed",
+      }),
+    })
+      .then(() => {
+        setSessionActive(false);
+        setSessionId(null);
+      })
+      .catch(() => {
+        setSessionActive(false);
+        setSessionId(null);
+      });
   };
 
   const handleNewProject = () => {
     if (!walletAddress) return;
+    const projectName = window.prompt("Name your project");
+    if (!projectName?.trim()) return;
     fetch("/api/db/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ walletAddress, name: "Untitled Project" }),
+      body: JSON.stringify({ walletAddress, name: projectName.trim() }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -258,13 +293,24 @@ export default function Home() {
         throw new Error("No code returned from the model.");
       }
 
-      if (tokens?.total) {
-        setTotalTokens((prev) => prev + tokens.total);
-      }
-
       setGenerationCount(nextCount);
       setLastUpdatedLabel("Updated just now");
-      setSessionBalance((prev) => Math.max(0, Number((prev - 0.08).toFixed(2))));
+      const nextBalance = Math.max(
+        0,
+        Number((sessionBalance - 0.08).toFixed(2))
+      );
+      setSessionBalance(nextBalance);
+      if (sessionId) {
+        fetch("/api/db/sessions", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId,
+            balanceUsdc: nextBalance,
+            status: "open",
+          }),
+        }).catch(() => {});
+      }
       if (tokens?.total) {
         setTotalTokens((prev) => prev + tokens.total);
       }
@@ -306,15 +352,27 @@ export default function Home() {
         }),
       }).catch(() => {});
 
-    fetch("/api/db/projects/update", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        projectId: currentProjectId,
-        latestHtml: generatedCode,
-        name: sanitizedPrompt.length > 60 ? `${sanitizedPrompt.slice(0, 57)}...` : sanitizedPrompt,
-      }),
-    }).catch(() => {});
+      fetch("/api/db/projects/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: currentProjectId,
+          latestHtml: generatedCode,
+          name: sanitizedPrompt.length > 60 ? `${sanitizedPrompt.slice(0, 57)}...` : sanitizedPrompt,
+        }),
+      }).catch(() => {});
+
+      if (sessionId) {
+        fetch("/api/db/transactions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId,
+            amountUsdc: 0.08,
+            txHash: null,
+          }),
+        }).catch(() => {});
+      }
     } catch (error) {
       console.error("Generation error:", error);
 
@@ -342,7 +400,7 @@ export default function Home() {
         setSessionActive(false);
         return;
       }
-      setWalletAddress(shortenAddress(list[0]));
+      setWalletAddress(list[0]);
       setWalletConnected(true);
     };
 
@@ -380,6 +438,21 @@ export default function Home() {
         setPreviewHtml(data.project?.latest_html || "");
         setMessages(data.messages || []);
         setGenerationCount(data.generationCount || 0);
+        setTotalTokens(data.totals?.tokens || 0);
+      })
+      .catch(() => {});
+
+    fetch("/api/db/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ walletAddress, balanceUsdc: 0 }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.session) return;
+        setSessionId(data.session.id);
+        setSessionBalance(Number(data.session.balance_usdc || 0));
+        setSessionActive(data.session.status === "open");
       })
       .catch(() => {});
   }, [walletConnected, walletAddress]);
