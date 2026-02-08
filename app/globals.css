@@ -21,8 +21,8 @@
 
 body {
   min-height: 100vh;
-  background: #0a0e14;
-  color: var(--text-main);
+  background: #ffffff;
+  color: #1f2937;
   font-family: var(--font-sans), system-ui, sans-serif;
   overflow: hidden;
 }

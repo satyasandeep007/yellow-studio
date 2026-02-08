@@ -21,7 +21,7 @@ export function ChatPanel({
   messages,
 }: ChatPanelProps) {
   return (
-    <div className="flex h-full flex-col bg-[#0f1419]">
+    <div className="flex h-full flex-col bg-white">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto w-full max-w-3xl space-y-6">
@@ -32,8 +32,8 @@ export function ChatPanel({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-semibold text-white">Start Building</h2>
-              <p className="mt-2 text-sm text-gray-400">Describe your website and watch it come to life</p>
+              <h2 className="text-2xl font-semibold text-gray-900">Start Building</h2>
+              <p className="mt-2 text-sm text-gray-600">Describe your website and watch it come to life</p>
             </div>
           ) : (
             messages.map((message) => {
@@ -57,14 +57,14 @@ export function ChatPanel({
                   {/* Message Content */}
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-white">
+                      <span className="text-sm font-semibold text-gray-900">
                         {isUser ? "You" : "Chainva AI"}
                       </span>
                       {message.meta && (
                         <span className="text-xs text-gray-500">{message.meta}</span>
                       )}
                     </div>
-                    <div className="prose prose-invert max-w-none text-sm text-gray-300">
+                    <div className="max-w-none text-sm text-gray-700 leading-relaxed">
                       {message.content}
                     </div>
                   </div>
@@ -76,7 +76,7 @@ export function ChatPanel({
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-800 bg-[#0f1419] px-4 py-4">
+      <div className="border-t border-gray-200 bg-white px-4 py-4">
         <div className="mx-auto w-full max-w-3xl">
           {!canGenerate && (
             <div className="mb-3 flex items-center gap-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-400">
@@ -88,7 +88,7 @@ export function ChatPanel({
           )}
           <div className="relative flex items-end gap-2">
             <textarea
-              className="min-h-[52px] flex-1 resize-none rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              className="min-h-[52px] flex-1 resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
               placeholder="Describe your website... (e.g., 'Create a neon event landing page with countdown')"
               value={prompt}
               onChange={(e) => onPromptChange(e.target.value)}

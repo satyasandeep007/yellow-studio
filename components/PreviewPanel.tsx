@@ -10,13 +10,13 @@ export function PreviewPanel({
   lastUpdated,
 }: PreviewPanelProps) {
   return (
-    <div className="flex h-full flex-col bg-[#1a1f2e]">
+    <div className="flex h-full flex-col bg-gray-50">
       {/* Preview Header */}
-      <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
         <div className="flex items-center gap-3">
-          <h3 className="text-sm font-semibold text-white">Live Preview</h3>
+          <h3 className="text-sm font-semibold text-gray-900">Live Preview</h3>
           {versionLabel && (
-            <span className="rounded-md bg-purple-500/10 px-2 py-0.5 text-xs text-purple-400">
+            <span className="rounded-md bg-purple-100 px-2 py-0.5 text-xs text-purple-600">
               {versionLabel}
             </span>
           )}
@@ -25,12 +25,12 @@ export function PreviewPanel({
           {lastUpdated && (
             <span className="text-xs text-gray-500">{lastUpdated}</span>
           )}
-          <button className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700">
+          <button className="rounded-lg bg-white border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
-          <button className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700">
+          <button className="rounded-lg bg-white border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
             Desktop
           </button>
         </div>
@@ -38,7 +38,7 @@ export function PreviewPanel({
 
       {/* Preview Content */}
       <div className="flex flex-1 overflow-hidden p-4">
-        <div className="flex flex-1 overflow-hidden rounded-lg border border-gray-700 bg-white shadow-2xl">
+        <div className="flex flex-1 overflow-hidden rounded-lg border border-gray-300 bg-white shadow-lg">
           {html ? (
             <iframe
               className="h-full w-full bg-white"

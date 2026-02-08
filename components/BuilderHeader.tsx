@@ -24,7 +24,7 @@ export function BuilderHeader({
     : "Session: Not started";
 
   return (
-    <header className="flex items-center justify-between border-b border-gray-800 bg-[#0a0e14] px-6 py-3">
+    <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
       {/* Left: Logo & Project Name */}
       <div className="flex items-center gap-4">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-pink-500">
@@ -33,7 +33,7 @@ export function BuilderHeader({
           </svg>
         </div>
         <div>
-          <h1 className="text-sm font-semibold text-white">Chainva AI</h1>
+          <h1 className="text-sm font-semibold text-gray-900">Chainva AI</h1>
           <p className="text-xs text-gray-500">AI Website Builder</p>
         </div>
       </div>
@@ -42,13 +42,13 @@ export function BuilderHeader({
       <div className="flex items-center gap-3">
         {/* Session Status */}
         {sessionActive ? (
-          <div className="flex items-center gap-2 rounded-lg bg-green-500/10 px-3 py-1.5 text-sm">
+          <div className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-1.5 text-sm">
             <div className="h-2 w-2 animate-pulse rounded-full bg-green-500"></div>
-            <span className="font-medium text-green-400">{sessionBalance.toFixed(2)} USDC</span>
+            <span className="font-medium text-green-600">{sessionBalance.toFixed(2)} USDC</span>
           </div>
         ) : (
-          <div className="flex items-center gap-2 rounded-lg bg-gray-800 px-3 py-1.5 text-sm text-gray-400">
-            <div className="h-2 w-2 rounded-full bg-gray-600"></div>
+          <div className="flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-1.5 text-sm text-gray-600">
+            <div className="h-2 w-2 rounded-full bg-gray-400"></div>
             <span>No Session</span>
           </div>
         )}
@@ -56,11 +56,11 @@ export function BuilderHeader({
         {/* Wallet Connection */}
         {walletConnected ? (
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-gray-800 px-3 py-1.5 text-sm font-mono text-gray-300">
+            <div className="rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-mono text-gray-700">
               {walletAddress}
             </div>
             <button
-              className="rounded-lg bg-gray-800 px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700"
+              className="rounded-lg bg-gray-100 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-200"
               onClick={onDisconnectWallet}
             >
               Disconnect
@@ -68,7 +68,7 @@ export function BuilderHeader({
           </div>
         ) : (
           <button
-            className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded-lg border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             onClick={onConnectWallet}
           >
             Connect Wallet
@@ -94,7 +94,7 @@ export function BuilderHeader({
         )}
 
         {/* Publish Button */}
-        <button className="rounded-lg bg-white px-4 py-1.5 text-sm font-medium text-black hover:bg-gray-200">
+        <button className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-gray-800">
           Publish
         </button>
       </div>
