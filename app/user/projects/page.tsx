@@ -1,56 +1,163 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { BuilderHeader } from "@/components/BuilderHeader";
+import { ChatPanel } from "@/components/ChatPanel";
+import { PreviewPanel } from "@/components/PreviewPanel";
+import { Sidebar } from "@/components/Sidebar";
+import { WalletModal } from "@/components/WalletModal";
+import { ProjectShell } from "@/components/project/ProjectShell";
+import { useGeneration } from "@/lib/hooks/useGeneration";
+import { useProjects } from "@/lib/hooks/useProjects";
+import { useWalletSession } from "@/lib/hooks/useWalletSession";
+import { useState } from "react";
 
-type EthereumProvider = {
-  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-};
+export default function ProjectsPage() {
+  const [prompt, setPrompt] = useState(
+    "Create a neon event landing page with countdown and registration form."
+  );
+  const [lastUpdatedLabel, setLastUpdatedLabel] = useState("Awaiting render");
+  const [previewMode, setPreviewMode] = useState<"code" | "preview">("code");
+  const [selectedModel, setSelectedModel] = useState<
+    "gpt-4" | "gpt-3.5-turbo" | "gpt-4o"
+  >("gpt-4");
 
-export default function ProjectsIndex() {
-  const router = useRouter();
-  const [status, setStatus] = useState("Checking wallet...");
+  const {
+    hasProvider,
+    walletConnected,
+    walletAddress,
+    walletModalOpen,
+    walletError,
+    sessionActive,
+    sessionBalance,
+    sessionId,
+    sessionTokens,
+    setSessionTokens,
+    setSessionBalance,
+    handleConnectWallet,
+    handleDisconnectWallet,
+    handleConnectMetaMask,
+    handleStartSession,
+    handleEndSession,
+    setWalletModalOpen,
+  } = useWalletSession();
 
-  useEffect(() => {
-    const provider =
-      typeof window !== "undefined"
-        ? (window as { ethereum?: EthereumProvider }).ethereum
-        : undefined;
-    if (!provider) {
-      setStatus("Connect your wallet to open a project.");
-      return;
-    }
+  const {
+    projects,
+    currentProjectId,
+    currentProjectName,
+    messages,
+    setMessages,
+    previewHtml,
+    setPreviewHtml,
+    generationCount,
+    setGenerationCount,
+    projectTokens,
+    setProjectTokens,
+    handleNewProject,
+    handleSelectProject,
+    resetProjectState,
+  } = useProjects({
+    walletConnected,
+    walletAddress,
+    urlProjectId: null,
+  });
 
-    provider
-      .request({ method: "eth_accounts" })
-      .then((accounts) => {
-        const list = Array.isArray(accounts) ? (accounts as string[]) : [];
-        if (!list.length) {
-          setStatus("Connect your wallet to open a project.");
-          return;
-        }
-        return fetch(`/api/db/projects?wallet=${list[0]}`);
+  const canGenerate = walletConnected && sessionActive;
+
+  const { isGenerating, handleGenerate } = useGeneration({
+    canGenerate,
+    prompt,
+    setPrompt,
+    selectedModel,
+    messages,
+    setMessages,
+    previewHtml,
+    setPreviewHtml,
+    currentProjectId,
+    generationCount,
+    setGenerationCount,
+    setLastUpdatedLabel,
+    setPreviewMode,
+    projectTokens,
+    setProjectTokens,
+    sessionTokens,
+    setSessionTokens,
+    sessionId,
+    sessionBalance,
+    setSessionBalance,
+    currentProjectName,
+  });
+
+  const handleCreateProject = () => {
+    if (!walletAddress) return;
+    const projectName = window.prompt("Name your project");
+    if (!projectName?.trim()) return;
+    handleNewProject(projectName.trim())
+      .then(() => {
+        resetProjectState();
+        setPrompt("");
       })
-      .then((res) => (res ? res.json() : null))
-      .then((data) => {
-        const projectId = data?.projects?.[0]?.id;
-        if (projectId) {
-          router.replace(`/user/projects/${projectId}`);
-        } else {
-          setStatus("No projects yet. Create your first project.");
-        }
-      })
-      .catch(() => {
-        setStatus("Connect your wallet to open a project.");
-      });
-  }, [router]);
+      .catch(() => {});
+  };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white px-6">
-      <div className="max-w-md text-center">
-        <h1 className="text-2xl font-semibold text-gray-900">Yellow Studio</h1>
-        <p className="mt-2 text-sm text-gray-500">{status}</p>
-      </div>
-    </div>
+    <ProjectShell
+      header={
+        <BuilderHeader
+          walletConnected={walletConnected}
+          walletAddress={walletAddress}
+          onConnectWallet={handleConnectWallet}
+          onDisconnectWallet={handleDisconnectWallet}
+          sessionActive={sessionActive}
+          sessionBalance={sessionBalance}
+          onStartSession={handleStartSession}
+          onEndSession={handleEndSession}
+          sessionTokens={sessionTokens}
+        />
+      }
+      sidebar={
+        <Sidebar
+          projects={projects.map((project) => ({
+            id: project.id,
+            name: project.name,
+            updatedAt: project.updated_at || "",
+          }))}
+          currentProjectId={currentProjectId || ""}
+          onSelectProject={handleSelectProject}
+          onNewProject={handleCreateProject}
+        />
+      }
+      chat={
+        <ChatPanel
+          prompt={prompt}
+          onPromptChange={setPrompt}
+          onGenerate={handleGenerate}
+          isGenerating={isGenerating}
+          canGenerate={canGenerate && Boolean(currentProjectId)}
+          messages={messages}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+        />
+      }
+      preview={
+        <PreviewPanel
+          html={previewHtml}
+          versionLabel={`v${generationCount + 1}`}
+          lastUpdated={lastUpdatedLabel}
+          isStreaming={isGenerating}
+          viewMode={previewMode}
+          onViewModeChange={setPreviewMode}
+        />
+      }
+      walletModal={
+        <WalletModal
+          open={walletModalOpen}
+          onClose={() => setWalletModalOpen(false)}
+          onConnectMetaMask={handleConnectMetaMask}
+          hasProvider={hasProvider}
+          errorMessage={walletError}
+        />
+      }
+    />
   );
 }
