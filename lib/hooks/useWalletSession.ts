@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchSessions, updateSession, upsertSession } from "@/lib/projectApi";
+import { setupMessageSigner } from "@/yellow/yellow";
 
 type EthereumProvider = {
   isMetaMask?: boolean;
@@ -72,6 +73,13 @@ export const useWalletSession = () => {
 
   const handleStartSession = () => {
     if (!walletConnected) return;
+
+    console.log('starting session...');
+    setupMessageSigner().then(({ userAddress, messageSigner }) => {
+      console.log('messageSigner', userAddress);
+    });
+
+
     upsertSession(walletAddress, 9.8)
       .then((data) => {
         if (!data.session) return;
