@@ -12,6 +12,8 @@ type ChatPanelProps = {
     content: string;
     meta?: string;
   }[];
+  selectedModel: "gpt-4" | "claude-3";
+  onModelChange: (model: "gpt-4" | "claude-3") => void;
 };
 
 const SUGGESTED_PROMPTS = [
@@ -28,8 +30,9 @@ export function ChatPanel({
   isGenerating,
   canGenerate,
   messages,
+  selectedModel,
+  onModelChange,
 }: ChatPanelProps) {
-  const [selectedModel, setSelectedModel] = useState<"gpt-4" | "claude-3">("gpt-4");
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Messages Area */}

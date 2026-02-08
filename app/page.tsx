@@ -41,6 +41,7 @@ export default function Home() {
     { id: "3", name: "Product Launch Page", updatedAt: "3 days ago" },
   ]);
   const [currentProjectId, setCurrentProjectId] = useState("1");
+  const [selectedModel, setSelectedModel] = useState<"gpt-4" | "claude-3">("gpt-4");
   const canGenerate = walletConnected && sessionActive;
 
   const ethereum = useMemo(() => {
@@ -121,127 +122,75 @@ export default function Home() {
     // In a real app, load project data from DB
   };
 
-  const handleGenerate = () => {
-    if (!canGenerate) return;
+  const handleGenerate = async () => {
+    if (!canGenerate || !prompt.trim()) return;
     setIsGenerating(true);
-    const sanitizedPrompt = prompt || "A neon event landing page";
-    const demoHtml = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chainva Preview</title>
-    <style>
-      :root {
-        color-scheme: light;
-      }
-      * {
-        box-sizing: border-box;
-        font-family: "Space Grotesk", Arial, sans-serif;
-      }
-      body {
-        margin: 0;
-        background: radial-gradient(circle at top, #1b1f2a, #0b0d12 50%, #07080c);
-        color: #f5f7ff;
-      }
-      .hero {
-        padding: 48px 40px;
-        display: grid;
-        gap: 24px;
-      }
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 14px;
-        border-radius: 999px;
-        border: 1px solid rgba(57, 255, 136, 0.4);
-        background: rgba(57, 255, 136, 0.08);
-        font-size: 12px;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        color: #9dffd0;
-      }
-      h1 {
-        font-size: 36px;
-        margin: 0;
-      }
-      p {
-        margin: 0;
-        line-height: 1.6;
-        color: rgba(245, 247, 255, 0.7);
-      }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 16px;
-      }
-      .card {
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(255, 255, 255, 0.04);
-        padding: 16px;
-      }
-      .cta {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 12px 22px;
-        border-radius: 999px;
-        background: #39ff88;
-        color: #0b0d12;
-        text-decoration: none;
-        font-weight: 600;
-        margin-top: 12px;
-      }
-    </style>
-  </head>
-  <body>
-    <section class="hero">
-      <span class="badge">Chainva Preview</span>
-      <h1>${sanitizedPrompt}</h1>
-      <p>Neon gradients, bold typography, and a countdown-ready layout generated in seconds.</p>
-      <div class="grid">
-        <div class="card">
-          <strong>Countdown</strong>
-          <p>12 days · 8 hours · 24 minutes</p>
-        </div>
-        <div class="card">
-          <strong>Speakers</strong>
-          <p>6 industry leaders announced</p>
-        </div>
-        <div class="card">
-          <strong>Register</strong>
-          <p>Early access list is open</p>
-        </div>
-      </div>
-      <a class="cta" href="#">Join the Event</a>
-    </section>
-  </body>
-</html>`;
+    const sanitizedPrompt = prompt.trim();
 
-    setTimeout(() => {
-      setPreviewHtml(demoHtml);
-      const nextCount = generationCount + 1;
+    // Add user message immediately
+    const nextCount = generationCount + 1;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: sanitizedPrompt,
+      },
+    ]);
+
+    // Clear the prompt input
+    setPrompt("");
+
+    try {
+      const response = await fetch("/api/chat/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: sanitizedPrompt,
+          model: selectedModel,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const generatedCode = data.code;
+
+      // Update preview with generated code
+      setPreviewHtml(generatedCode);
       setGenerationCount(nextCount);
       setLastUpdatedLabel("Updated just now");
       setSessionBalance((prev) => Math.max(0, Number((prev - 0.08).toFixed(2))));
+
+      // Add assistant message
       setMessages((prev) => [
         ...prev,
         {
-          id: `user-${nextCount + 1}`,
-          role: "user",
-          content: sanitizedPrompt,
-        },
-        {
-          id: `assistant-${nextCount + 1}`,
+          id: `assistant-${Date.now()}`,
           role: "assistant",
-          content: "Generated hero, countdown, and registration CTA layout.",
-          meta: `Generation #${nextCount + 1} • 0.08 USDC`,
+          content: `Generated your ${sanitizedPrompt.toLowerCase()}. Check the preview panel to see the result!`,
+          meta: `Generation #${nextCount} • 0.08 USDC`,
         },
       ]);
+    } catch (error) {
+      console.error("Generation error:", error);
+
+      // Add error message
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `error-${Date.now()}`,
+          role: "assistant",
+          content: `Sorry, I encountered an error generating your website. Please make sure your OpenAI API key is set in .env.local and try again.`,
+        },
+      ]);
+    } finally {
       setIsGenerating(false);
-    }, 450);
+    }
   };
 
   useEffect(() => {
@@ -301,6 +250,8 @@ export default function Home() {
             isGenerating={isGenerating}
             canGenerate={canGenerate}
             messages={messages}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
           />
         </div>
 
