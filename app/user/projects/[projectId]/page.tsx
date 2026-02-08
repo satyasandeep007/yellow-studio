@@ -5,6 +5,19 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { PreviewPanel } from "@/components/PreviewPanel";
 import { Sidebar } from "@/components/Sidebar";
 import { WalletModal } from "@/components/WalletModal";
+import { ProjectShell } from "@/components/project/ProjectShell";
+import {
+  createGeneration,
+  createMessage,
+  createProject,
+  createTransaction,
+  ensureUser,
+  fetchProject,
+  fetchProjects,
+  updateProject,
+  updateSession,
+  upsertSession,
+} from "@/lib/projectApi";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -109,15 +122,7 @@ export default function ProjectPage() {
   };
   const handleStartSession = () => {
     if (!walletConnected) return;
-    fetch("/api/db/sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        walletAddress: walletAddress.toLowerCase(),
-        balanceUsdc: 9.8,
-      }),
-    })
-      .then((res) => res.json())
+    upsertSession(walletAddress, 9.8)
       .then((data) => {
         if (!data.session) return;
         setSessionId(data.session.id);
@@ -132,15 +137,11 @@ export default function ProjectPage() {
       setSessionActive(false);
       return;
     }
-    fetch("/api/db/sessions", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId,
-        balanceUsdc: sessionBalance,
-        status: "closed",
-        totalTokens: sessionTokens,
-      }),
+    updateSession({
+      sessionId,
+      balanceUsdc: sessionBalance,
+      status: "closed",
+      totalTokens: sessionTokens,
     })
       .then(() => {
         setSessionActive(false);
@@ -156,15 +157,7 @@ export default function ProjectPage() {
     if (!walletAddress) return;
     const projectName = window.prompt("Name your project");
     if (!projectName?.trim()) return;
-    fetch("/api/db/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        walletAddress: walletAddress.toLowerCase(),
-        name: projectName.trim(),
-      }),
-    })
-      .then((res) => res.json())
+    createProject(walletAddress, projectName.trim())
       .then((data) => {
         if (!data.project) return;
         setProjects((prev) => [data.project, ...prev]);
@@ -181,8 +174,7 @@ export default function ProjectPage() {
   const handleSelectProject = (projectId: string) => {
     setCurrentProjectId(projectId);
     router.push(`/user/projects/${projectId}`);
-    fetch(`/api/db/project/${projectId}`)
-      .then((res) => res.json())
+    fetchProject(projectId)
       .then((data) => {
         if (data?.project?.latest_html) {
           setPreviewHtml(data.project.latest_html);
@@ -218,15 +210,11 @@ export default function ProjectPage() {
         content: sanitizedPrompt,
       },
     ]);
-    fetch("/api/db/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        projectId: currentProjectId,
-        role: "user",
-        content: sanitizedPrompt,
-        tokens: 0,
-      }),
+    createMessage({
+      projectId: currentProjectId,
+      role: "user",
+      content: sanitizedPrompt,
+      tokens: 0,
     }).catch(() => {});
 
     setPrompt("");
@@ -310,29 +298,21 @@ export default function ProjectPage() {
       );
       setSessionBalance(nextBalance);
       if (sessionId) {
-        fetch("/api/db/sessions", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId,
-            balanceUsdc: nextBalance,
-            status: "open",
-          }),
+        updateSession({
+          sessionId,
+          balanceUsdc: nextBalance,
+          status: "open",
         }).catch(() => {});
       }
       if (tokens?.total) {
         setProjectTokens((prev) => prev + tokens.total);
         setSessionTokens((prev) => prev + tokens.total);
         if (sessionId) {
-          fetch("/api/db/sessions", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              sessionId,
-              balanceUsdc: nextBalance,
-              status: "open",
-              totalTokens: sessionTokens + tokens.total,
-            }),
+          updateSession({
+            sessionId,
+            balanceUsdc: nextBalance,
+            status: "open",
+            totalTokens: sessionTokens + tokens.total,
           }).catch(() => {});
         }
       }
@@ -349,57 +329,41 @@ export default function ProjectPage() {
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
-      fetch("/api/db/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId: currentProjectId,
-          role: "assistant",
-          content: assistantMessage.content,
-          tokens: assistantMessage.tokens || 0,
-        }),
+      createMessage({
+        projectId: currentProjectId,
+        role: "assistant",
+        content: assistantMessage.content,
+        tokens: assistantMessage.tokens || 0,
       }).catch(() => {});
 
-      fetch("/api/db/generations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId: currentProjectId,
-          prompt: sanitizedPrompt,
-          html: generatedCode,
-          model: selectedModel,
-          tokens: tokens?.total || 0,
-          costUsdc: 0.08,
-        }),
+      createGeneration({
+        projectId: currentProjectId,
+        prompt: sanitizedPrompt,
+        html: generatedCode,
+        model: selectedModel,
+        tokens: tokens?.total || 0,
+        costUsdc: 0.08,
       }).catch(() => {});
 
       const shouldRename =
         currentProjectName.trim().length === 0 ||
         currentProjectName.toLowerCase().startsWith("untitled project");
 
-      fetch("/api/db/projects/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId: currentProjectId,
-          latestHtml: generatedCode,
-          name: shouldRename
-            ? sanitizedPrompt.length > 60
-              ? `${sanitizedPrompt.slice(0, 57)}...`
-              : sanitizedPrompt
-            : undefined,
-        }),
+      updateProject({
+        projectId: currentProjectId,
+        latestHtml: generatedCode,
+        name: shouldRename
+          ? sanitizedPrompt.length > 60
+            ? `${sanitizedPrompt.slice(0, 57)}...`
+            : sanitizedPrompt
+          : undefined,
       }).catch(() => {});
 
       if (sessionId) {
-        fetch("/api/db/transactions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId,
-            amountUsdc: 0.08,
-            txHash: null,
-          }),
+        createTransaction({
+          sessionId,
+          amountUsdc: 0.08,
+          txHash: null,
         }).catch(() => {});
       }
     } catch (error) {
@@ -444,15 +408,8 @@ export default function ProjectPage() {
 
   useEffect(() => {
     if (!walletConnected || !walletAddress) return;
-    fetch("/api/db/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ walletAddress: walletAddress.toLowerCase() }),
-    })
-      .then(() =>
-        fetch(`/api/db/projects?wallet=${walletAddress.toLowerCase()}`)
-      )
-      .then((res) => res.json())
+    ensureUser(walletAddress)
+      .then(() => fetchProjects(walletAddress))
       .then((data) => {
         const list = data.projects || [];
         setProjects(list);
@@ -462,11 +419,10 @@ export default function ProjectPage() {
           if (fallbackId !== urlProjectId) {
             router.replace(`/user/projects/${fallbackId}`);
           }
-          return fetch(`/api/db/project/${fallbackId}`);
+          return fetchProject(fallbackId);
         }
         return null;
       })
-      .then((res) => (res ? res.json() : null))
       .then((data) => {
         if (!data) return;
         setPreviewHtml(data.project?.latest_html || "");
@@ -476,15 +432,7 @@ export default function ProjectPage() {
       })
       .catch(() => {});
 
-    fetch("/api/db/sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        walletAddress: walletAddress.toLowerCase(),
-        balanceUsdc: 0,
-      }),
-    })
-      .then((res) => res.json())
+    upsertSession(walletAddress, 0)
       .then((data) => {
         if (!data.session) return;
         setSessionId(data.session.id);
@@ -496,20 +444,21 @@ export default function ProjectPage() {
   }, [walletConnected, walletAddress, urlProjectId, router]);
 
   return (
-    <div className="flex h-screen flex-col bg-white">
-      <BuilderHeader
-        walletConnected={walletConnected}
-        walletAddress={walletAddress}
-        onConnectWallet={handleConnectWallet}
-        onDisconnectWallet={handleDisconnectWallet}
-        sessionActive={sessionActive}
-        sessionBalance={sessionBalance}
-        onStartSession={handleStartSession}
-        onEndSession={handleEndSession}
-        sessionTokens={sessionTokens}
-      />
-
-      <div className="flex flex-1 overflow-hidden">
+    <ProjectShell
+      header={
+        <BuilderHeader
+          walletConnected={walletConnected}
+          walletAddress={walletAddress}
+          onConnectWallet={handleConnectWallet}
+          onDisconnectWallet={handleDisconnectWallet}
+          sessionActive={sessionActive}
+          sessionBalance={sessionBalance}
+          onStartSession={handleStartSession}
+          onEndSession={handleEndSession}
+          sessionTokens={sessionTokens}
+        />
+      }
+      sidebar={
         <Sidebar
           projects={projects.map((project) => ({
             id: project.id,
@@ -520,39 +469,38 @@ export default function ProjectPage() {
           onSelectProject={handleSelectProject}
           onNewProject={handleNewProject}
         />
-
-        <div className="flex-1 border-r border-gray-200">
-          <ChatPanel
-            prompt={prompt}
-            onPromptChange={setPrompt}
-            onGenerate={handleGenerate}
-            isGenerating={isGenerating}
-            canGenerate={canGenerate}
-            messages={messages}
-            selectedModel={selectedModel}
-            onModelChange={setSelectedModel}
-          />
-        </div>
-
-        <div className="flex-1">
-          <PreviewPanel
-            html={previewHtml}
-            versionLabel={`v${generationCount + 1}`}
-            lastUpdated={lastUpdatedLabel}
-            isStreaming={isGenerating}
-            viewMode={previewMode}
-            onViewModeChange={setPreviewMode}
-          />
-        </div>
-      </div>
-
-      <WalletModal
-        open={walletModalOpen}
-        onClose={() => setWalletModalOpen(false)}
-        onConnectMetaMask={handleConnectMetaMask}
-        hasProvider={hasProvider}
-        errorMessage={walletError}
-      />
-    </div>
+      }
+      chat={
+        <ChatPanel
+          prompt={prompt}
+          onPromptChange={setPrompt}
+          onGenerate={handleGenerate}
+          isGenerating={isGenerating}
+          canGenerate={canGenerate}
+          messages={messages}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+        />
+      }
+      preview={
+        <PreviewPanel
+          html={previewHtml}
+          versionLabel={`v${generationCount + 1}`}
+          lastUpdated={lastUpdatedLabel}
+          isStreaming={isGenerating}
+          viewMode={previewMode}
+          onViewModeChange={setPreviewMode}
+        />
+      }
+      walletModal={
+        <WalletModal
+          open={walletModalOpen}
+          onClose={() => setWalletModalOpen(false)}
+          onConnectMetaMask={handleConnectMetaMask}
+          hasProvider={hasProvider}
+          errorMessage={walletError}
+        />
+      }
+    />
   );
 }
